@@ -12,6 +12,7 @@ WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build /src/.next/standalone ./
 COPY --from=build /src/.next/static ./.next/static
+COPY --from=build /src/public ./public
 COPY db ./db
 COPY scripts/migrate.mjs scripts/set-password.mjs ./scripts/
 COPY deploy/vps/scheduler.mjs ./deploy/scheduler.mjs
