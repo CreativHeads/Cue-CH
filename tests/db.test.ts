@@ -29,7 +29,7 @@ beforeAll(async () => {
   await pg.exec(readFileSync(path.join(__dirname, '../db/migrations/0001_init.sql'), 'utf8'));
   await pg.exec(seedSql());
   for (const s of await rows<{ id: string; name: string }>(`select id, name from staff`)) ids[s.name] = s.id;
-  ids.malabar = (await row<{ id: string }>(`select id from clients where ig_username = 'malabar'`))!.id;
+  ids.malabar = (await row<{ id: string }>(`select id from clients where name = 'Malabar'`))!.id;
 }, 60_000);
 
 const lead = (): Actor => ({ id: ids.Thanseeh, isLead: true });

@@ -8,8 +8,8 @@ export const POST_FIELDS = [
   'media_caption', 'media_reach', 'media_like_count', 'media_comments_count', 'media_saved', 'media_views',
   'media_thumbnail_url', 'media_relationship', 'media_owner_username', 'media_collaborators',
 ];
-// Story field names must be confirmed against Windsor's Instagram field list (brief §5.1); override with WINDSOR_STORY_FIELDS.
-export const STORY_FIELDS = (process.env.WINDSOR_STORY_FIELDS || 'account_id,story_id,story_timestamp,story_permalink,story_reach,story_media_type').split(',');
+// Story field names as Windsor's Instagram connector names them (checked against the live API); override with WINDSOR_STORY_FIELDS.
+export const STORY_FIELDS = (process.env.WINDSOR_STORY_FIELDS || 'account_id,story_id,story_timestamp,story_permalink,story_reach,media_type').split(',');
 
 export type RawRow = Record<string, unknown>;
 
@@ -18,7 +18,8 @@ export function normaliseType(mediaType?: unknown, productType?: unknown, isStor
   const m = String(mediaType ?? '').toUpperCase(), p = String(productType ?? '').toUpperCase();
   if (p === 'AD') return null;
   if (isStory || p === 'STORY') return 'story';
-  if (m === 'REEL' || (m === 'VIDEO' && p === 'REELS')) return 'reel';
+  // Instagram reports reels as REELS/REELS; older data uses REEL or VIDEO + REELS
+  if (m === 'REEL' || m === 'REELS' || p === 'REELS') return 'reel';
   if (m === 'CAROUSEL_ALBUM') return 'carousel';
   if (m === 'IMAGE') return 'poster';
   if (m === 'VIDEO') return 'video';
@@ -70,7 +71,8 @@ export async function upsertPosts(on: Db, raw: RawRow[], opts: { stories: boolea
   const seen = new Set<string>();
   const clientsSeen = new Set<string>();
   for (const r of raw) {
-    const mediaId = str(opts.stories ? r.story_id ?? r.media_id : r.media_id);
+    // the stories request also returns feed rows without a story id; those are skipped
+    const mediaId = str(opts.stories ? r.story_id : r.media_id);
     const ts = str(opts.stories ? r.story_timestamp ?? r.timestamp : r.timestamp);
     if (!mediaId || !ts || Number.isNaN(Date.parse(ts))) continue;
     const client = clientFor(r, clients);

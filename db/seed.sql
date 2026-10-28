@@ -15,11 +15,11 @@ on conflict (email) do nothing;
 insert into clients (name, ig_username, is_connected, brand_color, account_manager_id)
 select v.name, v.ig, true, v.color, (select id from staff where role = 'lead' limit 1)
 from (values
-  ('Elite Dental Studio', 'elitedentalstudio', '#e4efe7'),
-  ('Staxhaus',            'staxhaus',          '#f3e9da'),
-  ('Malabar',             'malabar',           '#f5e6e2'),
-  ('Union',               'union',             '#e6e8f4'),
-  ('Haircom',             'haircom.in',        '#f6ebdd'),
-  ('Dentcom',             'dentcom',           '#e2eef0')
+  ('Elite Dental Studio', 'elitedental_studio', '#e4efe7'),
+  ('Staxhaus',            'staxhaus__',        '#f3e9da'),
+  ('Malabar',             'malabarsheetsandpipes', '#f5e6e2'),
+  ('Union',               'union_finserv',     '#e6e8f4'),
+  ('Haircom',             '_haircom',          '#f6ebdd'),
+  ('Dentcom',             '_dentcom',          '#e2eef0')
 ) as v(name, ig, color)
 where not exists (select 1 from clients c where c.ig_username = v.ig);

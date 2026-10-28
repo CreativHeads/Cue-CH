@@ -36,7 +36,7 @@ beforeAll(async () => {
   for (const f of ['0001_init.sql', '0002_sync_reminders.sql']) await pg.exec(readFileSync(path.join(__dirname, '../db/migrations', f), 'utf8'));
   await pg.exec(readFileSync(path.join(__dirname, '../db/seed.sql'), 'utf8'));
   for (const s of await rows<{ id: string; name: string }>(`select id, name from staff`)) ids[s.name] = s.id;
-  client = (await row<{ id: string }>(`update clients set windsor_account_id = 'acc-malabar' where ig_username = 'malabar' returning id`))!.id;
+  client = (await row<{ id: string }>(`update clients set windsor_account_id = 'acc-malabar' where name = 'Malabar' returning id`))!.id;
   process.env.TELEGRAM_BOT_TOKEN = 'test-token';
   process.env.WINDSOR_API_KEY = 'test-key';
 }, 60_000);
@@ -60,6 +60,7 @@ describe('Instagram type normalisation (§5.1)', () => {
     expect(normaliseType('IMAGE', 'STORY')).toBe('story');
     expect(normaliseType('REEL', 'FEED')).toBe('reel');
     expect(normaliseType('VIDEO', 'REELS')).toBe('reel');
+    expect(normaliseType('REELS', 'REELS')).toBe('reel'); // what the live API returns
     expect(normaliseType('CAROUSEL_ALBUM', 'FEED')).toBe('carousel');
     expect(normaliseType('IMAGE', 'FEED')).toBe('poster');
     expect(normaliseType('VIDEO', 'FEED')).toBe('video');
