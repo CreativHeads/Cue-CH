@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      APP_INTERNAL_URL: http://cue-tracker:3000
+      APP_INTERNAL_URL: http://app:3000   # private network only, so "app" is unambiguous
     depends_on: [app]
     command: ["node", "deploy/scheduler.mjs"]
 
