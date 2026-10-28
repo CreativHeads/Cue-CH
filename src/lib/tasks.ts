@@ -59,7 +59,7 @@ export async function updateTask(on: Driver, a: Actor, id: string, input: z.infe
     if (patch.stage && t.stage === 'posted' && t.post_id) {
       // the post goes back to the review queue (Phase 2)
       await tx.query(`update post_matches set revoked_at = now() where task_id = $1 and revoked_at is null`, [id]);
-      await tx.query(`update ig_posts set status = 'pending_review' where id = $1`, [t.post_id]);
+      await tx.query(`update ig_posts set status = 'pending_review', manual = true, suggested_task_id = $2 where id = $1`, [t.post_id, id]);
     }
     const keys = Object.keys(patch);
     if (!keys.length) return t;

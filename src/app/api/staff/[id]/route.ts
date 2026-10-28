@@ -17,7 +17,7 @@ export const PATCH = handler(async (req: Request, { params }: Params) => {
     throw new HttpError(400, 'You can’t deactivate or demote yourself');
   }
   const patch: Record<string, unknown> = { ...input, ...(password ? { password_hash: await hashPassword(password) } : {}) };
-  const set = setClause(patch, ['name', 'role', 'title', 'is_active', 'password_hash'], 1);
+  const set = setClause(patch, ['name', 'email', 'role', 'title', 'is_active', 'password_hash', 'telegram_chat_id'], 1);
 
   return json(await db().transaction(c.me.id, async (tx) => {
     if (reassign_to) await tx.query(`update tasks set owner_id = $2 where owner_id = $1 and stage <> 'posted'`, [id, reassign_to]);

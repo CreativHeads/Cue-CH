@@ -1,8 +1,10 @@
 // Apply db/migrations/*.sql in order (each once), and with --seed also run db/seed.sql.
-// Usage: npm run db:migrate   |   npm run db:seed
+// Usage: npm run db:migrate   |   npm run db:seed   (in Docker: node scripts/migrate.mjs)
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { Client } from 'pg';
+import pg from 'pg';
+
+const { Client } = pg;
 
 for (const f of ['.env.local', '.env']) {
   try { process.loadEnvFile(f); } catch { /* optional */ }
@@ -16,7 +18,7 @@ async function main() {
   await client.connect();
   try {
     await client.query(`create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())`);
-    const done = new Set((await client.query<{ name: string }>(`select name from schema_migrations`)).rows.map((r) => r.name));
+    const done = new Set((await client.query(`select name from schema_migrations`)).rows.map((r) => r.name));
     for (const file of readdirSync(path.join(dir, 'migrations')).filter((f) => f.endsWith('.sql')).sort()) {
       if (done.has(file)) continue;
       await client.query('begin');
@@ -27,7 +29,7 @@ async function main() {
         console.log(`applied ${file}`);
       } catch (e) {
         await client.query('rollback');
-        throw new Error(`${file}: ${(e as Error).message}`);
+        throw new Error(`${file}: ${e.message}`);
       }
     }
     if (process.argv.includes('--seed')) {

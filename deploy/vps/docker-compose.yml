@@ -1,0 +1,85 @@
+# CreativHeads Cue (content tracker) at cue.creativheads.com.
+# HTTPS comes from the casting-manager Caddy (ports 80/443), which reaches the app over the
+# casting-manager_default network by the name "cue-tracker". Its database is its own container.
+# Run from /opt/cue/deploy/vps:  docker compose up -d --build
+name: cue
+
+x-env: &env
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://cue:${POSTGRES_PASSWORD}@db:5432/cue
+    APP_TIMEZONE: Asia/Kolkata
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cue
+      POSTGRES_USER: cue
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cue -d cue"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build:
+      context: ../..
+      dockerfile: deploy/vps/Dockerfile
+    restart: unless-stopped
+    <<: *env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      default:
+      web:
+        aliases: [cue-tracker]
+
+  # Calls the app's scheduled jobs at IST times (Instagram checks, reminders, digest, scores).
+  scheduler:
+    build:
+      context: ../..
+      dockerfile: deploy/vps/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_INTERNAL_URL: http://app:3000
+    depends_on: [app]
+    command: ["node", "deploy/scheduler.mjs"]
+
+  # Daily compressed database dump, last 14 kept, in its own volume.
+  backup:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: cue
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: cue
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backups:/backups
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        while true; do
+          f=/backups/cue-$$(date +%Y%m%d-%H%M).sql.gz
+          pg_dump --no-owner | gzip > $$f && echo "backup $$f"
+          ls -1t /backups/*.sql.gz | tail -n +15 | xargs -r rm --
+          sleep 86400
+        done
+
+networks:
+  web:
+    name: casting-manager_default
+    external: true
+
+volumes:
+  pgdata:
+  backups:

@@ -14,8 +14,8 @@ function describe(e: TaskEvent, name: (id: string | null) => string) {
     case 'stage_change': return e.from_value ? `Stage changed from ${STAGE_LABEL[e.from_value as Stage]} to ${STAGE_LABEL[e.to_value as Stage]}.` : `Task created in ${STAGE_LABEL[e.to_value as Stage]}.`;
     case 'reassign': return `Reassigned from ${name(e.from_value)} to ${name(e.to_value)}.`;
     case 'manual_post': return 'Marked posted by hand. Waiting for Instagram confirmation.';
-    case 'match': return 'Matched to an Instagram post.';
-    case 'unmatch': return 'Post detached.';
+    case 'match': return e.to_value?.startsWith('manual') ? 'Matched to an Instagram post by hand.' : 'Confirmed live on Instagram and matched automatically.';
+    case 'unmatch': return e.to_value === 'deleted on Instagram' ? 'The post was removed from Instagram; back to Scheduled.' : 'Post detached; back to Scheduled.';
     case 'edit': return 'Due date changed.';
     default: return e.to_value ?? e.type;
   }
@@ -99,10 +99,11 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
             <div className="dsec"><h4>The creative brief <small>{edit ? 'Editable' : 'Read only'}</small></h4>
               <textarea className="input" rows={5} value={form.brief ?? ''} onChange={set('brief')} disabled={!edit} /></div>
 
-            {data.post && <div className="dsec"><h4>Matched post</h4><div className="metrics">
+            {data.post && <div className="dsec"><h4>Matched post <span className={`badge ${t.delivery === 'late' ? 'amber' : 'green'}`}>{t.delivery === 'late' ? 'Late' : 'On time'}</span></h4><div className="metrics">
               <div><b>{data.post.reach ?? '—'}</b><small>Reach</small></div><div><b>{data.post.likes ?? '—'}</b><small>Likes</small></div>
               <div><b>{data.post.comments ?? '—'}</b><small>Comments</small></div><div><b>{data.post.saves ?? '—'}</b><small>Saves</small></div></div>
-              <a className="link-btn" style={{ color: 'var(--green)', marginTop: 10, display: 'inline-block' }} href={data.post.permalink} target="_blank" rel="noopener noreferrer">View on Instagram</a></div>}
+              <div className="row" style={{ justifyContent: 'space-between', marginTop: 10 }}><a className="link-btn" style={{ color: 'var(--green)' }} href={data.post.permalink} target="_blank" rel="noopener noreferrer">View on Instagram</a>
+              {lead && <button className="btn sm" disabled={busy} onClick={() => { if (confirm('Detach this post? The task goes back to Scheduled and the post to the review queue.')) run(() => api(`/api/tasks/${id}/unmatch`, { method: 'POST' }), 'Post detached'); }}>Unmatch</button>}</div></div>}
             {t.stage === 'posted' && !data.post && t.permalink && <div className="dsec"><h4>Posted link</h4><a className="link-btn" style={{ color: 'var(--green)' }} href={t.permalink} target="_blank" rel="noopener noreferrer">{t.permalink}</a></div>}
 
             {t.stage !== 'posted' && edit && <div className="dsec"><h4>Mark posted by hand</h4>

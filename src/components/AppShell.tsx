@@ -57,6 +57,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
   useEffect(load, [load]);
   useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('task');
+    if (t && boot) setTaskId(t);
+  }, [boot, pathname]);
 
   const ws = useMemo<Workspace | null>(() => {
     if (!boot) return null;

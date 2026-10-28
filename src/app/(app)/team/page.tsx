@@ -13,6 +13,8 @@ export default function Team() {
   const [deactivating, setDeactivating] = useState<Staff | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [resetting, setResetting] = useState<Staff | null>(null);
+  const [tg, setTg] = useState<Staff | null>(null);
+  const [editing, setEditing] = useState<Staff | null>(null);
   const now = new Date();
 
   async function addStaff() {
@@ -37,9 +39,11 @@ export default function Team() {
           const od = open.filter((t) => new Date(t.due_at) < now).length;
           return <div key={s.id} className="list-item" style={{ opacity: s.is_active ? 1 : 0.55 }}>
             <Avatar staff={s} />
-            <Link href={`/tasks?owner=${s.id}`} className="t"><b>{s.name}{s.id === ws.me.id && <small> (you)</small>}</b><small>{s.title ?? ROLE_LABEL[s.role]} · {s.email}{!s.is_active && ' · Inactive'}</small></Link>
+            <Link href={`/tasks?owner=${s.id}`} className="t"><b>{s.name}{s.id === ws.me.id && <small> (you)</small>}</b><small>{s.title ?? ROLE_LABEL[s.role]} · {s.email}{!s.telegram_chat_id && ' · no Telegram'}{!s.is_active && ' · Inactive'}</small></Link>
             {od > 0 && <span className="badge red nodot">{od} overdue</span>}
             <span className="badge nodot grey">{open.length} open</span>
+            {ws.isAdmin && <button className="btn sm" onClick={() => setEditing(s)}>Edit</button>}
+            {ws.isAdmin && <button className="btn sm" onClick={() => setTg(s)}>{s.telegram_chat_id ? 'Telegram ✓' : 'Telegram'}</button>}
             {ws.isAdmin && s.id !== ws.me.id && <button className="btn sm" onClick={() => setResetting(s)}>Reset password</button>}
             {ws.isAdmin && s.id !== ws.me.id && <button className="btn sm" onClick={() => (s.is_active ? setDeactivating(s) : setActive(s, true))}>{s.is_active ? 'Deactivate' : 'Activate'}</button>}
           </div>;
@@ -59,6 +63,8 @@ export default function Team() {
         {err && <div className="full err">{err}</div>}
       </form></Modal>}
     {resetting && <ResetModal staff={resetting} onClose={() => setResetting(null)} />}
+    {tg && <TelegramModal staff={tg} onClose={() => setTg(null)} />}
+    {editing && <EditModal staff={editing} onClose={() => setEditing(null)} />}
     {deactivating && <DeactivateModal staff={deactivating} openCount={(data ?? []).filter((t) => t.owner_id === deactivating.id).length} onClose={() => setDeactivating(null)} onConfirm={(to) => setActive(deactivating, false, to)} />}
   </>;
 }
@@ -84,5 +90,47 @@ function ResetModal({ staff, onClose }: { staff: Staff; onClose: () => void }) {
     <div className="field"><label>New password (at least 8 characters)</label><input type="text" autoComplete="off" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
     <p className="muted" style={{ fontSize: 12 }}>Share it with {staff.name} directly. They can change it after signing in.</p>
     {err && <div className="err">{err}</div>}
+  </Modal>;
+}
+
+function TelegramModal({ staff, onClose }: { staff: Staff; onClose: () => void }) {
+  const ws = useWorkspace();
+  const [chat, setChat] = useState(staff.telegram_chat_id ?? '');
+  const [err, setErr] = useState<string | null>(null);
+  async function save(value: string | null) {
+    setErr(null);
+    try { await api(`/api/staff/${staff.id}`, { method: 'PATCH', json: { telegram_chat_id: value } }); toast(value ? 'Telegram linked' : 'Telegram unlinked'); ws.reloadWorkspace(); onClose(); }
+    catch (e) { setErr((e as Error).message); }
+  }
+  return <Modal title={`${staff.name} on Telegram`} onClose={onClose} footer={<>
+    {staff.telegram_chat_id && <button className="btn danger" onClick={() => save(null)}>Unlink</button>}
+    <button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" onClick={() => save(chat.trim() || null)}>Save</button></>}>
+    <div className="field"><label>Telegram chat ID</label><input value={chat} onChange={(e) => setChat(e.target.value)} placeholder="e.g. 123456789" inputMode="numeric" /></div>
+    <p className="muted" style={{ fontSize: 12 }}>To find it, {staff.name} sends any message to the reminder bot, then you read the chat ID from the bot’s updates (or use @userinfobot). They must have pressed Start on the bot, or Telegram won’t deliver.</p>
+    {err && <div className="err">{err}</div>}
+  </Modal>;
+}
+
+function EditModal({ staff, onClose }: { staff: Staff; onClose: () => void }) {
+  const ws = useWorkspace();
+  const [err, setErr] = useState<string | null>(null);
+  const self = staff.id === ws.me.id;
+  async function save() {
+    const form = document.getElementById('edForm') as HTMLFormElement;
+    if (!form.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(form)) as Record<string, string>;
+    try {
+      await api(`/api/staff/${staff.id}`, { method: 'PATCH', json: { name: d.name, email: d.email, title: d.title || null, ...(self ? {} : { role: d.role }) } });
+      toast('Saved'); ws.reloadWorkspace(); onClose();
+    } catch (e) { setErr((e as Error).message); }
+  }
+  return <Modal title={`Edit ${staff.name}`} onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save</button></>}>
+    <form id="edForm" className="fgrid" onSubmit={(e) => { e.preventDefault(); save(); }}>
+      <div className="field"><label>Name</label><input name="name" required defaultValue={staff.name} /></div>
+      <div className="field"><label>Sign-in email</label><input name="email" type="email" required defaultValue={staff.email} /></div>
+      <div className="field"><label>Role</label><select name="role" defaultValue={staff.role} disabled={self}><option value="designer">Designer</option><option value="editor">Editor</option><option value="lead">Lead</option><option value="admin">Admin</option></select></div>
+      <div className="field"><label>Title</label><input name="title" defaultValue={staff.title ?? ''} /></div>
+      {err && <div className="full err">{err}</div>}
+    </form>
   </Modal>;
 }

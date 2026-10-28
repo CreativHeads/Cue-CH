@@ -1,14 +1,17 @@
 // Set a staff member's password from the server shell (e.g. the first admin login).
 // Usage: npm run set-password -- souban@example.com 'a-strong-password'
+// On the server: docker compose exec app node scripts/set-password.mjs souban@example.com 'a-strong-password'
 import { randomBytes, scrypt as scryptCb } from 'node:crypto';
 import { promisify } from 'node:util';
-import { Client } from 'pg';
+import pg from 'pg';
+
+const { Client } = pg;
 
 for (const f of ['.env.local', '.env']) {
   try { process.loadEnvFile(f); } catch { /* optional */ }
 }
 
-const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
+const scrypt = promisify(scryptCb);
 
 async function main() {
   const [email, password] = process.argv.slice(2);

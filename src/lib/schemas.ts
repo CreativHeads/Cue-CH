@@ -75,10 +75,12 @@ export const staffCreate = z.object({
 });
 export const staffPatch = z.object({
   name: z.string().trim().min(1).optional(),
+  email: z.string().trim().email().transform((s) => s.toLowerCase()).optional(),
   role: z.enum(['admin', 'lead', 'designer', 'editor']).optional(),
   title: z.string().nullable().optional(),
   is_active: z.boolean().optional(),
   password: password.optional(),
+  telegram_chat_id: z.union([z.string().regex(/^-?\d{4,20}$/, 'a Telegram chat ID is digits'), z.null()]).optional(),
   reassign_to: uuid.optional(),
 });
 

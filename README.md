@@ -3,10 +3,11 @@
 Plans each client's monthly Instagram package, turns it into dated tasks, and tracks them through
 production: To brief → Designing → Client review → Approved → Scheduled → Posted.
 
-This is **Phase 1** of the developer brief: sign-in, staff, clients, plans and plan items, frequency
-rules, task generation, the kanban board, task drawer, My tasks, the dashboard grid (manual
-statuses) and the manual "Mark posted" button. Review queue, Reports and Settings show what
-arrives in Phases 2–4; their database tables already exist.
+Built so far (developer brief): **Phase 1** (sign-in, staff, clients, plans, task generation, board,
+drawer, My tasks, delivery grid, manual posted), **Phase 2** (Instagram data via Windsor.ai, matching,
+review queue, extras, deletion detection, job health), **Phase 3** (Telegram digest, 2-hour nudge, overdue
+alerts, inactivity flags, quiet hours, copy guard, linking and tap-to-approve buttons) and **Phase 5**
+(story capture and matching, month-end scores). Phase 4 (weekly client report + PDF) is not built yet.
 
 Stack: Next.js 15 (App Router) · PostgreSQL (on your own server) · Zod · Vitest.
 Everything runs on one server, alongside any other sites already there. No outside services.
@@ -134,7 +135,55 @@ src/app/(app)/**              screens
 tests/                        unit tests + PostgreSQL integration tests
 ```
 
-## Deploying to a VPS (later)
+## Deploying to the VPS (cue.creativheads.com)
 
-Not set up yet. The plan: run it with PM2 on a free port (e.g. 3001), add an nginx site for its
-own subdomain next to the existing sites, and add a free HTTPS certificate with certbot.
+The VPS runs each project in Docker behind one shared Caddy (in casting-manager), which serves
+HTTPS for every domain. Cue follows the same pattern as ad-reports:
+
+- `deploy/vps/docker-compose.yml`: the app, its own PostgreSQL, a scheduler and daily backups
+  (14 kept). The app joins the shared network as `cue-tracker`.
+- `deploy/vps/deploy.sh`: uploads the **committed** code to `/opt/cue`, creates `deploy/vps/.env`
+  with random secrets on the first run (never overwritten), builds and starts the containers, loads
+  staff and clients once, and adds a `cue.creativheads.com` block to the shared Caddyfile (validated,
+  reverted if invalid). The other projects are not touched.
+
+```bash
+CUE_VPS=root@<vps-ip> bash deploy/vps/deploy.sh
+```
+
+Before the first deploy: add a DNS **A record** `cue` → the VPS IP. After it:
+
+1. Set the admin password (see the command the script prints), sign in, and correct the staff emails
+   on **Team → Edit**.
+2. Fill in `WINDSOR_API_KEY` and `TELEGRAM_BOT_TOKEN` in `/opt/cue/deploy/vps/.env`, then
+   `docker compose up -d` in that folder.
+3. Set each client's data account ID (Clients → Edit) so Instagram rows map to the right client.
+
+### Scheduled jobs (IST)
+
+| Job | When |
+| --- | --- |
+| Instagram posts (14-day lookback) + matching | every 3 hours |
+| Instagram stories (today, yesterday) | every 2 hours at :45 |
+| Nudges + overdue alerts | every 15 minutes |
+| Morning digest | 09:00 |
+| Inactivity flags | 10:00 |
+| Weekly carry-over | Monday 00:15 |
+| Month-end scores | 1st (provisional) and 8th (final), 05:30 |
+| Next-month plan prompt | 25th, 10:00 |
+
+Health: **Settings → Job health** shows each job's last run and flags anything that hasn't succeeded
+in twice its interval.
+
+### Telegram: send-only vs. own bot
+
+A Telegram bot can have only one webhook. The VPS's `creativheads` app already runs several bots on
+webhooks, so by default Cue only **sends** (no webhook): give it any bot token and enter each
+person's chat ID on **Team → Telegram**. If Cue gets its **own** bot (new one from @BotFather), set
+`TELEGRAM_WEBHOOK_ENABLED=true` and `TELEGRAM_BOT_USERNAME`, then register the webhook once:
+
+```bash
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://cue.creativheads.com/api/telegram/webhook&secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+That turns on self-linking (Settings → Connect Telegram) and the tap-to-approve buttons.

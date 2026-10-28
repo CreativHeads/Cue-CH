@@ -27,7 +27,7 @@ export const ROLE_LABEL: Record<Role, string> = { admin: 'Admin', lead: 'Creativ
 
 export interface Staff {
   id: string; name: string; email: string; role: Role; title: string | null;
-  telegram_chat_id: number | null; digest_time: string; is_active: boolean;
+  telegram_chat_id: string | null; digest_time: string; is_active: boolean;
 }
 export interface Client {
   id: string; name: string; ig_username: string; windsor_account_id: string | null; is_connected: boolean;
