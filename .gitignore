@@ -1,0 +1,35 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets: never commit these. Copy .env.example to .env.local (or .env on the server).
+.env
+.env.*
+!.env.example
+deploy/vps/.env
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+secrets/
+
+# Local database files and logs
+pgdata/
+*.log
+*.sql.gz
+*.dump
+backups/
+
+# Editor / OS / tooling
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
