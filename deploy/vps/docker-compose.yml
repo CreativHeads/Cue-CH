@@ -7,7 +7,8 @@ name: cue
 x-env: &env
   env_file: .env
   environment:
-    DATABASE_URL: postgres://cue:${POSTGRES_PASSWORD}@db:5432/cue
+    # cue-db, not db: the app also sits on the shared network, where "db" is another project's database
+    DATABASE_URL: postgres://cue:${POSTGRES_PASSWORD}@cue-db:5432/cue
     APP_TIMEZONE: Asia/Kolkata
 
 services:
@@ -20,6 +21,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      default:
+        aliases: [cue-db]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cue -d cue"]
       interval: 5s
@@ -47,7 +51,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      APP_INTERNAL_URL: http://app:3000
+      APP_INTERNAL_URL: http://cue-tracker:3000
     depends_on: [app]
     command: ["node", "deploy/scheduler.mjs"]
 
@@ -56,7 +60,7 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      PGHOST: db
+      PGHOST: cue-db
       PGUSER: cue
       PGPASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: cue
