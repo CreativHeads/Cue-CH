@@ -41,13 +41,8 @@ export function Icon({ name, size = 17 }: { name: string; size?: number }) {
   );
 }
 
-export function Logo() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26">
-      <rect x="1" y="1" width="10" height="10" rx="1.5" fill="currentColor" />
-      <rect x="15" y="1" width="10" height="10" rx="1.5" fill="currentColor" />
-      <rect x="1" y="15" width="10" height="10" rx="1.5" fill="currentColor" />
-      <path d="M16 16l8 8M24 16l-8 8" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-    </svg>
-  );
+/** The Cue by CreativHeads wordmark (public/cue-logo.png, 842x256). */
+export function Logo({ height = 34 }: { height?: number }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/cue-logo.png" alt="Cue by CreativHeads" height={height} width={Math.round((height * 842) / 256)} style={{ display: 'block' }} />;
 }

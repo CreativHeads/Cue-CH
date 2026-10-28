@@ -102,9 +102,9 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
             {data.post && <div className="dsec"><h4>Matched post <span className={`badge ${t.delivery === 'late' ? 'amber' : 'green'}`}>{t.delivery === 'late' ? 'Late' : 'On time'}</span></h4><div className="metrics">
               <div><b>{data.post.reach ?? '—'}</b><small>Reach</small></div><div><b>{data.post.likes ?? '—'}</b><small>Likes</small></div>
               <div><b>{data.post.comments ?? '—'}</b><small>Comments</small></div><div><b>{data.post.saves ?? '—'}</b><small>Saves</small></div></div>
-              <div className="row" style={{ justifyContent: 'space-between', marginTop: 10 }}><a className="link-btn" style={{ color: 'var(--green)' }} href={data.post.permalink} target="_blank" rel="noopener noreferrer">View on Instagram</a>
+              <div className="row" style={{ justifyContent: 'space-between', marginTop: 10 }}><a className="link-btn" style={{ color: 'var(--brand)' }} href={data.post.permalink} target="_blank" rel="noopener noreferrer">View on Instagram</a>
               {lead && <button className="btn sm" disabled={busy} onClick={() => { if (confirm('Detach this post? The task goes back to Scheduled and the post to the review queue.')) run(() => api(`/api/tasks/${id}/unmatch`, { method: 'POST' }), 'Post detached'); }}>Unmatch</button>}</div></div>}
-            {t.stage === 'posted' && !data.post && t.permalink && <div className="dsec"><h4>Posted link</h4><a className="link-btn" style={{ color: 'var(--green)' }} href={t.permalink} target="_blank" rel="noopener noreferrer">{t.permalink}</a></div>}
+            {t.stage === 'posted' && !data.post && t.permalink && <div className="dsec"><h4>Posted link</h4><a className="link-btn" style={{ color: 'var(--brand)' }} href={t.permalink} target="_blank" rel="noopener noreferrer">{t.permalink}</a></div>}
 
             {t.stage !== 'posted' && edit && <div className="dsec"><h4>Mark posted by hand</h4>
               <div className="row"><input className="input" value={link} onChange={(e) => setLink(e.target.value)} placeholder={`Paste the Instagram link${t.content_type === 'story' ? ' (optional for stories)' : ''}`} />

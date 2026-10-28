@@ -19,9 +19,9 @@ export default function SignIn() {
 
   return (
     <div className="signin"><div className="card">
-      <div className="brand" style={{ padding: 0 }}><Logo /><span>CreativHeads<sup>®</sup></span></div>
+      <div className="brand" style={{ padding: 0, marginBottom: 6 }}><Logo height={44} /></div>
       <h1>Welcome back.</h1>
-      <p className="muted" style={{ marginTop: 0 }}>Sign in to the Content Tracker.</p>
+      <p className="muted" style={{ marginTop: 0 }}>Sign in to Cue, the CreativHeads content tracker.</p>
       <form onSubmit={submit}>
         <div className="field"><label>Email</label><input type="email" required autoFocus autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@creativheads.in" /></div>
         <div className="field" style={{ marginTop: 12 }}><label>Password</label><input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>

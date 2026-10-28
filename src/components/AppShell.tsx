@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <Ctx.Provider value={ws}>
       <div className="app">
         <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
-          <Link className="brand" href="/"><Logo /><span>CreativHeads<sup>®</sup></span></Link>
+          <Link className="brand" href="/" aria-label="Cue home"><Logo /></Link>
           <div className="ws-card"><span className="ws-ico"><Icon name="board" /></span><div><b>Content Tracker</b><small>Agency workspace</small></div></div>
           <div className="nav-label">Workspace</div>
           <nav className="nav">

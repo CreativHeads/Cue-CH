@@ -15,5 +15,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // scheduled-job and Telegram endpoints (later phases) authenticate with their own secrets
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/cron|api/telegram).*)'],
+  // images (logo, icons) stay public so the sign-in page can show them
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/cron|api/telegram|.*\.(?:png|ico|svg|jpg|webp)$).*)'],
 };

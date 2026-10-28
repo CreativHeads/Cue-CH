@@ -49,7 +49,7 @@ export default function Overview() {
   const nav = (n: number) => { if (mode === 'week') setWeekStart(addDays(weekStart, 7 * n)); else setMonth(ymAdd(month, n)); setDay(null); };
 
   return <>
-    <PageHead eyebrow={dateStr} title={<>{greet}, {ws.me.name} <span style={{ color: '#a8cc7c' }}>✳</span></>} sub="A little clarity for your creative day."
+    <PageHead eyebrow={dateStr} title={<>{greet}, {ws.me.name} <span style={{ color: '#7b9bff' }}>✳</span></>} sub="A little clarity for your creative day."
       actions={<button className="btn primary" onClick={() => ws.newTask()}><Icon name="plus" />New task</button>} />
     {dash.error && <ErrorBox error={dash.error} />}
     {!d ? <Loading /> : <>

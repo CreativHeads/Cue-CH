@@ -50,7 +50,7 @@ export default function ClientDetail({ params }: { params: Promise<{ id: string 
         <div className="cal">
           {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x, i) => <div key={i} className="h">{x}</div>)}
           {Array.from({ length: lead }, (_, i) => <div key={`b${i}`} />)}
-          {days.map((x) => <div key={x} className={`d ${x === today ? 'today' : ''}`} style={{ cursor: 'pointer', background: day === x ? '#e3f0d6' : undefined }} onClick={() => setDay(day === x ? null : x)}>
+          {days.map((x) => <div key={x} className={`d ${x === today ? 'today' : ''}`} style={{ cursor: 'pointer', background: day === x ? 'var(--brand-soft2)' : undefined }} onClick={() => setDay(day === x ? null : x)}>
             {+x.slice(8)}<div className="row" style={{ gap: 2 }}>{row.cells[x]?.dots.slice(0, 4).map((s, i) => <i key={i} className={`dot ${s}`} />)}</div></div>)}
         </div>
         {day && <div style={{ marginTop: 12 }}><b style={{ fontSize: 13 }}>{fmtD(day)}</b>

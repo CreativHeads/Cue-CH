@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
-export const metadata: Metadata = { title: 'CreativHeads Content Tracker', description: 'Plan, track and verify every client deliverable.' };
+export const metadata: Metadata = { title: 'Cue by CreativHeads', description: 'Plan, track and verify every client deliverable.' };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

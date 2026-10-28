@@ -34,7 +34,7 @@ export function useData<T>(url: string | null, deps: unknown[] = []) {
 export const TypeIcon = ({ type }: { type: ContentType }) => <span className={`type-ic ${type}`}><Icon name={type} size={15} /></span>;
 export const StageBadge = ({ stage }: { stage: Stage }) => <span className={`badge st-${stage}`}>{STAGE_LABEL[stage]}</span>;
 
-const COLORS = ['#e8ecd9', '#e3ecf3', '#ebe7f5', '#f5e9e1', '#e3f0e6', '#f6e6e6'];
+const COLORS = ['#e6ecfa', '#e3ecf3', '#ebe7f5', '#f5e9e1', '#e3f0e6', '#f6e6e6'];
 export const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 export function Avatar({ staff, sm }: { staff?: Staff | null; sm?: boolean }) {
   const name = staff?.name ?? '?';
@@ -44,7 +44,7 @@ export function Avatar({ staff, sm }: { staff?: Staff | null; sm?: boolean }) {
 export function ClientLogo({ client }: { client: Client }) {
   const words = client.name.split(/\s+/);
   const ini = (words.length > 1 ? words.map((w) => w[0]).join('').slice(0, 3) : client.name.slice(0, 2)).toLowerCase();
-  return <span className="logo" style={{ ['--c' as string]: client.brand_color || '#e8efe3' }}>{ini}</span>;
+  return <span className="logo" style={{ ['--c' as string]: client.brand_color || '#e6ecfa' }}>{ini}</span>;
 }
 
 export function PageHead({ eyebrow, title, sub, actions }: { eyebrow: ReactNode; title: ReactNode; sub: ReactNode; actions?: ReactNode }) {
