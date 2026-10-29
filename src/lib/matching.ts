@@ -5,7 +5,12 @@ import { HttpError } from './errors';
 import type { ContentType, Stage } from './types';
 
 export const AUTO = 70, SUGGEST = 40;
-const COMPATIBLE: [ContentType, ContentType][] = [['poster', 'carousel'], ['reel', 'video']];
+const COMPATIBLE: [ContentType, ContentType][] = [
+  ['poster', 'carousel'],
+  ['reel', 'video'],
+  ['reel', 'creative_reel'],
+  ['presentation_video', 'video'],
+];
 export const compatible = (a: ContentType, b: ContentType) => COMPATIBLE.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
 
 export interface Post { id: string; client_id: string; content_type: ContentType; posted_at: string; permalink: string | null; shortcode: string | null; is_story: boolean; status: string; relationship: string | null; owner_username: string | null }

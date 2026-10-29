@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CONTENT_TYPES, STAGES } from './types';
+import { ALL_CONTENT_TYPES, CONTENT_TYPES, STAGES } from './types';
 
 const weekday = z.enum(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']);
 export const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD');
@@ -32,7 +32,7 @@ export const planCreate = z.object({ month, copy_from: uuid.optional() });
 export const planPatch = z.object({ status: z.enum(['draft', 'active', 'closed']).optional(), notes: z.string().nullable().optional() });
 
 export const planItemInput = z.object({
-  content_type: z.enum(CONTENT_TYPES),
+  content_type: z.enum(ALL_CONTENT_TYPES),
   monthly_count: z.number().int().min(0).max(62),
   frequency,
   owner_id: uuid.nullable(),
@@ -44,7 +44,7 @@ export const PLAN_ITEM_COLS = ['content_type', 'monthly_count', 'frequency', 'ow
 
 export const taskCreate = z.object({
   client_id: uuid,
-  content_type: z.enum(CONTENT_TYPES),
+  content_type: z.enum(ALL_CONTENT_TYPES),
   owner_id: uuid.nullable(),
   stage: z.enum(STAGES).default('to_brief'),
   due_date: date,
@@ -59,7 +59,7 @@ export const taskPatch = z.object({
   brief: z.string().nullable().optional(),
   stage: z.enum(STAGES).optional(),
   owner_id: uuid.nullable().optional(),
-  content_type: z.enum(CONTENT_TYPES).optional(),
+  content_type: z.enum(ALL_CONTENT_TYPES).optional(),
   due_date: date.optional(),
   posting_time: time.optional(),
   priority: z.enum(['normal', 'high']).optional(),

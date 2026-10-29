@@ -3,7 +3,7 @@
 -- Permissions are enforced in the app's API; triggers record who changed what.
 
 -- ---------- enums ----------
-create type content_type as enum ('story','carousel','reel','poster','video','other');
+create type content_type as enum ('story','carousel','reel','poster','video','other','creative_reel','presentation_video');
 create type task_stage   as enum ('to_brief','designing','client_review','approved','scheduled','posted');
 create type staff_role   as enum ('admin','lead','designer','editor');
 create type match_method as enum ('auto','suggested','manual');

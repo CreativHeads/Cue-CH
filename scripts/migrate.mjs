@@ -21,15 +21,25 @@ async function main() {
     const done = new Set((await client.query(`select name from schema_migrations`)).rows.map((r) => r.name));
     for (const file of readdirSync(path.join(dir, 'migrations')).filter((f) => f.endsWith('.sql')).sort()) {
       if (done.has(file)) continue;
-      await client.query('begin');
-      try {
-        await client.query(readFileSync(path.join(dir, 'migrations', file), 'utf8'));
+      const sql = readFileSync(path.join(dir, 'migrations', file), 'utf8');
+      const isAlterType = /alter\s+type\s+.*add\s+value/i.test(sql);
+      if (isAlterType) {
+        for (const stmt of sql.split(';').map((s) => s.trim()).filter(Boolean)) {
+          await client.query(stmt);
+        }
         await client.query(`insert into schema_migrations (name) values ($1)`, [file]);
-        await client.query('commit');
         console.log(`applied ${file}`);
-      } catch (e) {
-        await client.query('rollback');
-        throw new Error(`${file}: ${e.message}`);
+      } else {
+        await client.query('begin');
+        try {
+          await client.query(sql);
+          await client.query(`insert into schema_migrations (name) values ($1)`, [file]);
+          await client.query('commit');
+          console.log(`applied ${file}`);
+        } catch (e) {
+          await client.query('rollback');
+          throw new Error(`${file}: ${e.message}`);
+        }
       }
     }
     if (process.argv.includes('--seed')) {

@@ -1,5 +1,6 @@
-export const CONTENT_TYPES = ['reel', 'carousel', 'poster', 'story', 'video', 'other'] as const;
-export type ContentType = (typeof CONTENT_TYPES)[number];
+export const CONTENT_TYPES = ['reel', 'poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
+export const ALL_CONTENT_TYPES = ['reel', 'poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'video', 'other'] as const;
+export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 export const STAGES = ['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'] as const;
 export type Stage = (typeof STAGES)[number];
 export type Role = 'admin' | 'lead' | 'designer' | 'editor';
@@ -13,15 +14,41 @@ export type Frequency =
   | { mode: 'dates'; dates: string[] };
 
 export const TYPE_LABEL: Record<ContentType, string> = {
-  reel: 'Reel', carousel: 'Carousel', poster: 'Poster', story: 'Story', video: 'Video', other: 'Other',
+  reel: 'Reel',
+  poster: 'Poster',
+  story: 'Story',
+  creative_reel: 'Creative Reel',
+  carousel: 'Carousel',
+  presentation_video: 'Presentation Video',
+  video: 'Video',
+  other: 'Other',
 };
+
+export interface ContentTypeColor {
+  bg: string;
+  border: string;
+  text: string;
+  dot: string;
+}
+
+export const CONTENT_TYPE_COLORS: Record<ContentType, ContentTypeColor> = {
+  reel: { bg: '#f3e8ff', border: '#d8b4fe', text: '#6b21a8', dot: '#9333ea' },
+  poster: { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' },
+  story: { bg: '#dcfce7', border: '#86efac', text: '#166534', dot: '#22c55e' },
+  creative_reel: { bg: '#ffe4e6', border: '#fda4af', text: '#9f1239', dot: '#f43f5e' },
+  carousel: { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af', dot: '#3b82f6' },
+  presentation_video: { bg: '#fef9c3', border: '#fde047', text: '#854d0e', dot: '#eab308' },
+  video: { bg: '#fef9c3', border: '#fde047', text: '#854d0e', dot: '#eab308' },
+  other: { bg: '#e0f2fe', border: '#bae6fd', text: '#0369a1', dot: '#0ea5e9' },
+};
+
 export const STAGE_LABEL: Record<Stage, string> = {
   to_brief: 'To brief', designing: 'Designing', client_review: 'Client review',
   approved: 'Approved', scheduled: 'Scheduled', posted: 'Posted',
 };
 /** "1 reel", "9 stories". */
 export const typeCount = (n: number, t: ContentType) =>
-  `${n} ${t === 'story' ? (n === 1 ? 'story' : 'stories') : TYPE_LABEL[t].toLowerCase() + (n === 1 ? '' : 's')}`;
+  `${n} ${t === 'story' ? (n === 1 ? 'story' : 'stories') : (TYPE_LABEL[t] ?? t).toLowerCase() + (n === 1 ? '' : 's')}`;
 
 export const ROLE_LABEL: Record<Role, string> = { admin: 'Admin', lead: 'Creative lead', designer: 'Designer', editor: 'Editor' };
 

@@ -158,7 +158,14 @@ table.gtable{border-collapse:collapse;width:100%;min-width:900px}
 .list-item .t small{font-size:11.5px}
 .type-ic{width:32px;height:32px;border-radius:8px;background:#f1f3f8;color:#6b74a0;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .type-ic svg{width:15px;height:15px}
-.type-ic.reel{background:#f4eefa;color:#8a68b4}.type-ic.story{background:#fbefe9;color:#c0754f}.type-ic.carousel{background:#eaf3f4;color:#4f8a92}.type-ic.video{background:#eef3fb;color:#5274b3}
+.type-ic.reel{background:#f3e8ff;color:#7c3aed}
+.type-ic.poster{background:#fee2e2;color:#dc2626}
+.type-ic.story{background:#dcfce7;color:#16a34a}
+.type-ic.creative_reel{background:#ffe4e6;color:#e11d48}
+.type-ic.carousel{background:#dbeafe;color:#2563eb}
+.type-ic.presentation_video{background:#fef9c3;color:#ca8a04}
+.type-ic.video{background:#fef9c3;color:#ca8a04}
+.type-ic.other{background:#e0f2fe;color:#0284c7}
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;border-radius:6px;font-weight:500;white-space:nowrap;background:#eff2f7;color:#566074}
 .badge::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
 .badge.nodot::before{display:none}
@@ -252,11 +259,42 @@ table.gtable{border-collapse:collapse;width:100%;min-width:900px}
 .days button.on{background:var(--brand-soft);border-color:#b7cdfb;color:var(--brand);font-weight:600}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:14px}
 .cal .h{font-size:10px;text-align:center;color:var(--muted);padding-bottom:4px}
-.cal .d{aspect-ratio:1;border-radius:7px;background:#f3f6fb;font-size:11px;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
-.cal .d small{font-size:8.5px}
+.cal .d{aspect-ratio:1;border-radius:8px;background:#f3f6fb;font-size:11px;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;border:1px solid transparent;transition:all .15s ease}
+.cal .d small{font-size:8.5px;font-weight:500}
 .cal .d.has{background:#dce8ff;color:var(--brand-dark)}
 .cal .d.has2{background:#bcd3ff}
-.cal .d.today{outline:1.5px solid var(--brand)}
+.cal .d.today{outline:1.5px solid var(--brand);box-shadow:0 0 0 2px #dbeafe}
+
+/* content type colors in calendar */
+.cal .d.t-reel{background:#f3e8ff;border-color:#d8b4fe;color:#6b21a8;font-weight:600}
+.cal .d.t-poster{background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:600}
+.cal .d.t-story{background:#dcfce7;border-color:#86efac;color:#166534;font-weight:600}
+.cal .d.t-creative_reel{background:#ffe4e6;border-color:#fda4af;color:#9f1239;font-weight:600}
+.cal .d.t-carousel{background:#dbeafe;border-color:#93c5fd;color:#1e40af;font-weight:600}
+.cal .d.t-presentation_video{background:#fef9c3;border-color:#fde047;color:#854d0e;font-weight:600}
+.cal .d.t-video{background:#fef9c3;border-color:#fde047;color:#854d0e;font-weight:600}
+.cal .d.t-other{background:#e0f2fe;border-color:#bae6fd;color:#0369a1;font-weight:600}
+
+/* dots in calendar cells */
+.cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex:none}
+.cal-dot.reel{background:#9333ea}
+.cal-dot.poster{background:#ef4444}
+.cal-dot.story{background:#22c55e}
+.cal-dot.creative_reel{background:#f43f5e}
+.cal-dot.carousel{background:#3b82f6}
+.cal-dot.presentation_video{background:#eab308}
+.cal-dot.video{background:#eab308}
+.cal-dot.other{background:#0ea5e9}
+
+/* colored tags for totals */
+.tag.t-reel{background:#f3e8ff;border-color:#d8b4fe;color:#6b21a8}
+.tag.t-poster{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+.tag.t-story{background:#dcfce7;border-color:#86efac;color:#166534}
+.tag.t-creative_reel{background:#ffe4e6;border-color:#fda4af;color:#9f1239}
+.tag.t-carousel{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.tag.t-presentation_video{background:#fef9c3;border-color:#fde047;color:#854d0e}
+.tag.t-video{background:#fef9c3;border-color:#fde047;color:#854d0e}
+.tag.t-other{background:#e0f2fe;border-color:#bae6fd;color:#0369a1}
 .warn-box{background:var(--orange-bg);border:1px solid #f0dcbf;color:#8a5a22;border-radius:10px;padding:9px 12px;font-size:12px;margin-top:10px}
 .date-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .date-chips span{font-size:11px;background:#eff2f7;border-radius:6px;padding:2px 6px;display:inline-flex;gap:4px}

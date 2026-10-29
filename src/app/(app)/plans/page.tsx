@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { api, ClientLogo, ErrorBox, Loading, PageHead, Select, toast, useData } from '@/components/ui';
 import { daysInMonth, fmtD, fmtYM, monthDays, MONTHS, todayIST, ymAdd, ymOf } from '@/lib/dates';
 import { itemDates } from '@/lib/generation';
-import { CONTENT_TYPES, TYPE_LABEL, typeCount, type ContentType, type Frequency, type Plan, type PlanItem, type Weekday } from '@/lib/types';
+import { CONTENT_TYPES, CONTENT_TYPE_COLORS, TYPE_LABEL, typeCount, type ContentType, type Frequency, type Plan, type PlanItem, type Weekday } from '@/lib/types';
 
 const WEEK: Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const RHYTHM: [Frequency['mode'], string][] = [['weekdays', 'On weekdays'], ['per_week', 'Per week'], ['spread', 'Spread evenly'], ['dates', 'Fixed dates']];
@@ -136,8 +136,7 @@ function Plans() {
                   onChange={(e) => { const v = e.target.value; if (v) { const dates = [...new Set([...f.dates, v])].sort(); update(i.id, { frequency: { ...f, dates }, monthly_count: dates.length }); } }} /><small>Pick dates to add</small></div>
                 <div className="date-chips">{f.dates.map((d) => <span key={d}>{fmtD(d)}{!locked && <button onClick={() => { const dates = f.dates.filter((x) => x !== d); update(i.id, { frequency: { ...f, dates }, monthly_count: dates.length }); }}>×</button>}</span>)}</div>
               </>}
-              <div className="pgrid2">
-                <div className="field"><label>Owner</label><select value={i.owner_id ?? ''} disabled={locked} onChange={(e) => update(i.id, { owner_id: e.target.value || null })}><option value="">Unassigned</option>{ws.staff.filter((s) => s.is_active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+              <div style={{ marginTop: 10, maxWidth: 220 }}>
                 <div className="field"><label>Posting time · IST</label><input type="time" value={i.posting_time.slice(0, 5)} disabled={locked} onChange={(e) => e.target.value && update(i.id, { posting_time: e.target.value })} /></div>
               </div>
             </div>;
@@ -157,9 +156,49 @@ function Plans() {
             <div className="cal">
               {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x, k) => <div key={k} className="h">{x}</div>)}
               {Array.from({ length: lead0 }, (_, k) => <div key={`b${k}`} />)}
-              {monthDays(month).map((d) => { const l = preview[d] ?? []; return <div key={d} title={l.map((t) => TYPE_LABEL[t]).join(', ')} className={`d ${l.length ? (l.length > 1 ? 'has has2' : 'has') : ''} ${d === today ? 'today' : ''}`}>{+d.slice(8)}{l.length > 0 && <small>{l.length} task{l.length > 1 ? 's' : ''}</small>}</div>; })}
+              {monthDays(month).map((d) => {
+                const l = preview[d] ?? [];
+                const unique = Array.from(new Set(l));
+                const singleClass = unique.length === 1 ? `t-${unique[0]}` : '';
+                const multiBg = unique.length > 1
+                  ? `linear-gradient(135deg, ${unique.map((t, idx, arr) => {
+                      const s = Math.round((idx / arr.length) * 100);
+                      const e = Math.round(((idx + 1) / arr.length) * 100);
+                      const bg = CONTENT_TYPE_COLORS[t]?.bg ?? '#f3f6fb';
+                      return `${bg} ${s}%, ${bg} ${e}%`;
+                    }).join(', ')})`
+                  : undefined;
+                return (
+                  <div
+                    key={d}
+                    title={l.map((t) => TYPE_LABEL[t] ?? t).join(', ')}
+                    className={`d ${l.length ? 'has' : ''} ${singleClass} ${d === today ? 'today' : ''}`}
+                    style={multiBg ? { background: multiBg, borderColor: '#cbd5e1', color: '#1e293b' } : undefined}
+                  >
+                    <span>{+d.slice(8)}</span>
+                    {l.length > 0 && (
+                      <>
+                        <small>{l.length} task{l.length > 1 ? 's' : ''}</small>
+                        <div className="row" style={{ gap: 2, marginTop: 1 }}>
+                          {l.map((t, idx) => (
+                            <i key={idx} className={`cal-dot ${t}`} title={TYPE_LABEL[t] ?? t} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className="row wrap" style={{ marginTop: 14, gap: 6 }}>{Object.entries(totals).map(([t, n]) => <span key={t} className="tag"><Icon name={t} size={11} />{typeCount(n!, t as ContentType)}</span>)}</div>
+            <div className="row wrap" style={{ marginTop: 14, gap: 6 }}>
+              {Object.entries(totals).map(([t, n]) => (
+                <span key={t} className={`tag t-${t}`}>
+                  <i className={`cal-dot ${t}`} style={{ width: 6, height: 6 }} />
+                  <Icon name={t} size={11} />
+                  {typeCount(n!, t as ContentType)}
+                </span>
+              ))}
+            </div>
             {warnings.map((w) => <div key={w} className="warn-box">⚠ {w}</div>)}
           </div>
           <div className="info-bar" style={{ marginTop: 14 }}><Icon name="info" size={15} />{plan.status === 'draft' ? 'Preview the generated dates before activation. The team’s tasks are created when you activate.' : 'Regenerating only updates untouched future tasks. Work already in progress or posted is never moved.'}</div>
