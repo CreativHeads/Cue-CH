@@ -1,6 +1,7 @@
 import { body, context, handler, HttpError, json } from '@/lib/api';
 import { addDays, toDueAt } from '@/lib/dates';
 import { db, rows } from '@/lib/db';
+import { runGeneration } from '@/lib/plans';
 import { date, taskCreate, uuid } from '@/lib/schemas';
 import { createTask } from '@/lib/tasks';
 import { STAGES } from '@/lib/types';
@@ -8,6 +9,22 @@ import { STAGES } from '@/lib/types';
 // GET /api/tasks?client=&owner=&stage=&from=&to=&open=true  (from/to are IST dates, inclusive)
 export const GET = handler(async (req: Request) => {
   await context();
+
+  // Self-heal: ensure active plans with items have their tasks generated
+  const ungenerated = await rows<{ id: string }>(
+    `select p.id from plans p
+     where p.status = 'active'
+       and exists (select 1 from plan_items pi where pi.plan_id = p.id)
+       and not exists (select 1 from tasks t where t.plan_item_id in (select id from plan_items where plan_id = p.id))`
+  );
+  for (const p of ungenerated) {
+    try {
+      await runGeneration(db(), p.id, false);
+    } catch (e) {
+      console.error('Failed to auto-generate tasks for plan', p.id, e);
+    }
+  }
+
   const q = new URL(req.url).searchParams;
   const where: string[] = [];
   const params: unknown[] = [];
