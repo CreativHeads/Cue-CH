@@ -12,6 +12,17 @@ const WEEK: Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const RHYTHM: [Frequency['mode'], string][] = [['weekdays', 'On weekdays'], ['per_week', 'Per week'], ['spread', 'Spread evenly'], ['dates', 'Fixed dates']];
 type PlanWithItems = Plan & { plan_items: PlanItem[] };
 
+const CAL_TYPE_LABEL: Record<ContentType, string> = {
+  reel: 'Reel',
+  poster: 'Poster',
+  story: 'Story',
+  carousel: 'Carousel',
+  creative_reel: 'Creative',
+  presentation_video: 'Pres. Video',
+  video: 'Video',
+  other: 'Other',
+};
+
 function defaultFreq(mode: Frequency['mode']): Frequency {
   if (mode === 'weekdays') return { mode, days: ['TUE', 'FRI'] };
   if (mode === 'per_week') return { mode, count: 3, days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] };
@@ -182,11 +193,11 @@ function Plans() {
                   : undefined;
 
                 const labelText = l.length === 1
-                  ? (TYPE_LABEL[l[0]] ?? l[0])
+                  ? (CAL_TYPE_LABEL[l[0]] ?? TYPE_LABEL[l[0]] ?? l[0])
                   : unique.length === 1
                   ? typeCount(l.length, l[0])
                   : l.length === 2
-                  ? `${TYPE_LABEL[l[0]] ?? l[0]} + ${TYPE_LABEL[l[1]] ?? l[1]}`
+                  ? `${CAL_TYPE_LABEL[l[0]] ?? l[0]} + ${CAL_TYPE_LABEL[l[1]] ?? l[1]}`
                   : `${l.length} tasks`;
 
                 return (
