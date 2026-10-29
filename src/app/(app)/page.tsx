@@ -54,7 +54,7 @@ export default function Overview() {
     {dash.error && <ErrorBox error={dash.error} />}
     {!d ? <Loading /> : <>
       <div className="stats">
-        <Link href="/board" className="card stat"><div className="top">Planned content<span className="ic"><Icon name="calendar" /></span></div><div className="num">{d.totals.planned}</div><p>{d.totals.planned} deliverables across {ws.clients.filter((c) => c.status === 'active').length} clients</p></Link>
+        <Link href="/board" className="card stat plan"><div className="top">Planned content<span className="ic"><Icon name="calendar" /></span></div><div className="num">{d.totals.planned}</div><p>{d.totals.planned} deliverables across {ws.clients.filter((c) => c.status === 'active').length} clients</p></Link>
         <div className="card stat good"><div className="top">Successfully posted<span className="ic"><Icon name="checkc" /></span></div><div className="num">{d.totals.posted}</div><p>↗ {pct}% of {fmtYM(viewMonth).split(' ')[0]}’s plan delivered</p><span className="bar" style={{ width: `${pct}%` }} /></div>
         <Link href="/board" className="card stat prog"><div className="top">In progress<span className="ic"><Icon name="clock" /></span></div><div className="num">{d.totals.inProgress}</div><p>Moving from ideas to great content</p></Link>
         <Link href="/tasks" className="card stat att"><div className="top">Needs attention<span className="ic"><Icon name="flag" /></span></div><div className="num">{d.totals.overdue}</div><p>△ {d.totals.overdue} past the posting deadline</p></Link>
