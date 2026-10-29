@@ -180,7 +180,7 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .type-ic.poster{background:#fee2e2;color:#dc2626}
 .type-ic.special_days_poster{background:#ccfbf1;color:#0d9488}
 .type-ic.story{background:#dcfce7;color:#16a34a}
-.type-ic.creative_reel{background:#ffedd5;color:#ea580c}
+.type-ic.creative_reel{background:#e0e7ff;color:#4f46e5}
 .type-ic.carousel{background:#dbeafe;color:#2563eb}
 .type-ic.presentation_video{background:#fef9c3;color:#ca8a04}
 .type-ic.video{background:#fef9c3;color:#ca8a04}
@@ -288,7 +288,7 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .cal .d.t-poster{background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:600}
 .cal .d.t-special_days_poster{background:#ccfbf1;border-color:#5eead4;color:#0f766e;font-weight:600}
 .cal .d.t-story{background:#dcfce7;border-color:#86efac;color:#166534;font-weight:600}
-.cal .d.t-creative_reel{background:#ffedd5;border-color:#fb923c;color:#9a3412;font-weight:600}
+.cal .d.t-creative_reel{background:#e0e7ff;border-color:#818cf8;color:#312e81;font-weight:600}
 .cal .d.t-carousel{background:#dbeafe;border-color:#93c5fd;color:#1e40af;font-weight:600}
 .cal .d.t-presentation_video{background:#fef9c3;border-color:#fde047;color:#854d0e;font-weight:600}
 .cal .d.t-video{background:#fef9c3;border-color:#fde047;color:#854d0e;font-weight:600}
@@ -300,7 +300,7 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .cal-dot.poster{background:#ef4444}
 .cal-dot.special_days_poster{background:#0d9488}
 .cal-dot.story{background:#22c55e}
-.cal-dot.creative_reel{background:#ea580c}
+.cal-dot.creative_reel{background:#4f46e5}
 .cal-dot.carousel{background:#3b82f6}
 .cal-dot.presentation_video{background:#eab308}
 .cal-dot.video{background:#eab308}
@@ -311,7 +311,7 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .tag.t-poster{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
 .tag.t-special_days_poster{background:#ccfbf1;border-color:#5eead4;color:#0f766e}
 .tag.t-story{background:#dcfce7;border-color:#86efac;color:#166534}
-.tag.t-creative_reel{background:#ffedd5;border-color:#fb923c;color:#9a3412}
+.tag.t-creative_reel{background:#e0e7ff;border-color:#818cf8;color:#312e81}
 .tag.t-carousel{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .tag.t-presentation_video{background:#fef9c3;border-color:#fde047;color:#854d0e}
 .tag.t-video{background:#fef9c3;border-color:#fde047;color:#854d0e}

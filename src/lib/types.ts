@@ -37,7 +37,7 @@ export const CONTENT_TYPE_COLORS: Record<ContentType, ContentTypeColor> = {
   poster: { bg: '#fee2e2', border: '#f87171', text: '#991b1b', dot: '#ef4444' },
   special_days_poster: { bg: '#ccfbf1', border: '#2dd4bf', text: '#0f766e', dot: '#0d9488' },
   story: { bg: '#dcfce7', border: '#4ade80', text: '#166534', dot: '#16a34a' },
-  creative_reel: { bg: '#fdf2f8', border: '#f472b6', text: '#9d174d', dot: '#db2777' },
+  creative_reel: { bg: '#e0e7ff', border: '#818cf8', text: '#312e81', dot: '#4f46e5' },
   carousel: { bg: '#dbeafe', border: '#60a5fa', text: '#1e40af', dot: '#2563eb' },
   presentation_video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
   video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
