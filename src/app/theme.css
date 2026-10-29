@@ -107,13 +107,13 @@ a,button,.card,.btn,.nav a,.kcard,.list-item,.chip-btn,.sel,.input,.field input,
 .month-nav button{width:30px;height:30px}
 .gtable th{color:#9aa2b4}
 .gtable th.today span{background:var(--grad-btn);border-radius:6px;padding:2px 5px;box-shadow:0 3px 8px -3px #0a5cff99}
-.gtable td{border-top-color:#eef1f7;height:50px}
+.gtable td{border-top-color:#eef1f7;height:64px}
 .gtable td.day{border-left-color:#f3f5fa}
 .gtable tbody tr:hover td{background:#fafbff}
 .gtable td.day:hover{background:#eef3ff}
 .gtable td.today,.gtable tbody tr:hover td.today{background:linear-gradient(180deg,#eef3ff,#f5f2ff)}
 .gtable td.day.picked{background:#dfe9ff}
-.dot{width:7px;height:7px;box-shadow:0 0 0 2px #fff}
+.dot{width:8px;height:8px;box-shadow:0 0 0 2px #fff}
 .dot.posted{background:#3fae5a}.dot.due{background:#f0a23a}.dot.missed{background:#e25c4b}.dot.extra{background:#b4bccc}
 .logo{border-radius:10px;box-shadow:inset 0 0 0 1px #ffffff80}
 .client-cell b{font-size:13px}

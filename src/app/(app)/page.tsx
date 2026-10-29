@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useWorkspace } from '@/components/AppShell';
 import { Icon } from '@/components/Icon';
 import { ClientLogo, ErrorBox, Loading, PageHead, Select, StageBadge, TypeIcon, useData } from '@/components/ui';
-import { addDays, DOWS, fmtD, fmtT, fmtYM, istTime, MONTHS, mondayOf, relDay, todayIST, ymAdd, ymOf } from '@/lib/dates';
+import { addDays, daysInMonth, DOWS, fmtD, fmtT, fmtYM, istTime, MONTHS, mondayOf, relDay, todayIST, ymAdd, ymOf } from '@/lib/dates';
 import { band } from '@/lib/score';
 import { CONTENT_TYPES, TYPE_LABEL, type Client, type ContentType, type Stage, type Task } from '@/lib/types';
 
@@ -19,7 +19,8 @@ export default function Overview() {
   const ws = useWorkspace();
   const today = todayIST();
   const [month, setMonth] = useState(ymOf(today));
-  const [mode, setMode] = useState<'month' | 'week'>('month');
+  const [mode, setMode] = useState<'month' | '15days' | 'week'>('month');
+  const [half, setHalf] = useState<1 | 2>(+today.slice(8) > 15 ? 2 : 1);
   const [weekStart, setWeekStart] = useState(mondayOf(today));
   const [owner, setOwner] = useState('');
   const [type, setType] = useState('');
@@ -35,7 +36,11 @@ export default function Overview() {
   const dateStr = `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dt.getUTCDay()]}, ${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]} ${dt.getUTCFullYear()}`;
 
   const d = dash.data;
-  const days = !d ? [] : mode === 'week' ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)) : d.days;
+  const days = !d ? [] : mode === 'week'
+    ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+    : mode === '15days'
+    ? (half === 1 ? d.days.slice(0, 15) : d.days.slice(15))
+    : d.days;
   const visible = (t: CellTask) => (!owner || t.owner === owner) && (!type || t.type === type);
   const dotsFor = (r: Row, day: string) => {
     const c = r.cells[day];
@@ -46,7 +51,22 @@ export default function Overview() {
   const pct = d && d.totals.planned ? Math.round((d.totals.posted / d.totals.planned) * 100) : 0;
   const dayTasks = day && d ? d.rows.flatMap((r) => (r.cells[day]?.tasks ?? []).filter(visible).map((t) => ({ ...t, client: r.client }))) : [];
 
-  const nav = (n: number) => { if (mode === 'week') setWeekStart(addDays(weekStart, 7 * n)); else setMonth(ymAdd(month, n)); setDay(null); };
+  const nav = (n: number) => {
+    if (mode === 'week') {
+      setWeekStart(addDays(weekStart, 7 * n));
+    } else if (mode === '15days') {
+      if (n > 0) {
+        if (half === 1) setHalf(2);
+        else { setMonth(ymAdd(month, 1)); setHalf(1); }
+      } else {
+        if (half === 2) setHalf(1);
+        else { setMonth(ymAdd(month, -1)); setHalf(2); }
+      }
+    } else {
+      setMonth(ymAdd(month, n));
+    }
+    setDay(null);
+  };
 
   return <>
     <PageHead eyebrow={dateStr} title={<>{greet}, {ws.me.name} <span style={{ color: '#7b9bff' }}>✳</span></>} sub="A little clarity for your creative day."
@@ -65,16 +85,30 @@ export default function Overview() {
           <div><h3>Delivery at a glance</h3><div className="sub">Every client. Every day. Nothing slipping through.</div></div>
           <div className="row wrap">
             <div className="legend"><span><i style={{ background: '#7aa954' }} />Posted</span><span><i style={{ background: '#d9a249' }} />Due</span><span><i style={{ background: 'var(--red)' }} />Missed</span><span><i style={{ background: 'var(--grey)' }} />Extra</span></div>
-            <div className="seg"><button className={mode === 'month' ? 'on' : ''} onClick={() => setMode('month')}>Month</button><button className={mode === 'week' ? 'on' : ''} onClick={() => setMode('week')}>Week</button></div>
+            <div className="seg">
+              <button className={mode === 'month' ? 'on' : ''} onClick={() => setMode('month')}>Month</button>
+              <button className={mode === '15days' ? 'on' : ''} onClick={() => setMode('15days')}>15 Days</button>
+              <button className={mode === 'week' ? 'on' : ''} onClick={() => setMode('week')}>Week</button>
+            </div>
           </div>
         </div>
         <div className="filters">
           <Select icon="user" value={owner} onChange={setOwner} options={[['', 'All owners'], ...ws.staff.filter((s) => s.is_active).map((s) => [s.id, s.name] as [string, string])]} />
           <Select icon="overview" value={type} onChange={setType} options={[['', 'All content types'], ...CONTENT_TYPES.map((t) => [t, TYPE_LABEL[t]] as [string, string])]} />
           <button className={`chip-btn ${problems ? 'on' : ''}`} onClick={() => setProblems(!problems)}><Icon name="flag" size={14} />Only problems</button>
-          <div className="month-nav"><button onClick={() => nav(-1)}>‹</button><span>{mode === 'week' ? `${fmtD(days[0])} – ${fmtD(days[6])}` : fmtYM(month)}</span><button onClick={() => nav(1)}>›</button></div>
+          <div className="month-nav">
+            <button onClick={() => nav(-1)}>‹</button>
+            <span>
+              {mode === 'week'
+                ? `${fmtD(days[0])} – ${fmtD(days[6])}`
+                : mode === '15days'
+                ? `${fmtYM(month)} (${half === 1 ? '1–15' : `16–${daysInMonth(month)}`})`
+                : fmtYM(month)}
+            </span>
+            <button onClick={() => nav(1)}>›</button>
+          </div>
         </div>
-        <div className="gtable-wrap"><table className="gtable">
+        <div className="gtable-wrap"><table className={`gtable mode-${mode}`}>
           <thead><tr><th className="cl">CLIENT</th>{days.map((x) => <th key={x} className={x === today ? 'today' : ''}><span>{+x.slice(8)}</span><small>{DOWS[new Date(x + 'T00:00:00Z').getUTCDay()][0]}</small></th>)}<th>SCORE</th></tr></thead>
           <tbody>
             {rows.map((r) => <tr key={r.client.id}>
