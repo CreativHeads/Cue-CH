@@ -49,8 +49,9 @@ fi"
 echo "==> Building and starting the containers (first build takes a few minutes)"
 $SSH "cd $DIR/deploy/vps && docker compose up -d --build 2>&1 | tail -6 && docker compose ps --format '{{.Service}}: {{.Status}}'"
 
-echo "==> Loading staff and clients (first deploy only; safe to repeat)"
-$SSH "cd $DIR/deploy/vps && if [ ! -f .seeded ]; then for i in \$(seq 1 30); do docker compose exec -T app node scripts/migrate.mjs --seed && touch .seeded && break; sleep 3; done; else echo 'already seeded'; fi"
+echo "==> Running database migrations"
+$SSH "cd $DIR/deploy/vps && for i in \$(seq 1 30); do docker compose exec -T app node scripts/migrate.mjs && break; sleep 3; done"
+$SSH "cd $DIR/deploy/vps && if [ ! -f .seeded ]; then docker compose exec -T app node scripts/migrate.mjs --seed && touch .seeded; else echo 'already seeded'; fi"
 
 echo "==> Adding $DOMAIN to Caddy (only if missing)"
 $SSH "set -e
