@@ -19,7 +19,7 @@ export default function Overview() {
   const ws = useWorkspace();
   const today = todayIST();
   const [month, setMonth] = useState(ymOf(today));
-  const [mode, setMode] = useState<'month' | '15days' | 'week'>('month');
+  const [mode, setMode] = useState<'month' | '15days' | 'week'>('week');
   const [half, setHalf] = useState<1 | 2>(+today.slice(8) > 15 ? 2 : 1);
   const [weekStart, setWeekStart] = useState(mondayOf(today));
   const [owner, setOwner] = useState('');
@@ -86,9 +86,9 @@ export default function Overview() {
           <div className="row wrap">
             <div className="legend"><span><i style={{ background: '#7aa954' }} />Posted</span><span><i style={{ background: '#d9a249' }} />Due</span><span><i style={{ background: 'var(--red)' }} />Missed</span><span><i style={{ background: 'var(--grey)' }} />Extra</span></div>
             <div className="seg">
-              <button className={mode === 'month' ? 'on' : ''} onClick={() => setMode('month')}>Month</button>
-              <button className={mode === '15days' ? 'on' : ''} onClick={() => setMode('15days')}>15 Days</button>
               <button className={mode === 'week' ? 'on' : ''} onClick={() => setMode('week')}>Week</button>
+              <button className={mode === '15days' ? 'on' : ''} onClick={() => setMode('15days')}>15 Days</button>
+              <button className={mode === 'month' ? 'on' : ''} onClick={() => setMode('month')}>Month</button>
             </div>
           </div>
         </div>

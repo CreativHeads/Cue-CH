@@ -26,7 +26,7 @@ const CAL_TYPE_LABEL: Record<ContentType, string> = {
 
 function defaultFreq(mode: Frequency['mode']): Frequency {
   if (mode === 'weekdays') return { mode, days: ['TUE', 'FRI'] };
-  if (mode === 'per_week') return { mode, count: 3, days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] };
+  if (mode === 'per_week') return { mode, count: 3, days: ['MON', 'WED', 'FRI'] };
   if (mode === 'dates') return { mode, dates: [] };
   return { mode: 'spread' };
 }
@@ -45,7 +45,23 @@ function Plans() {
   const [busy, setBusy] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  useEffect(() => { setItems(plan ? [...plan.plan_items].sort((a, b) => a.sort - b.sort) : []); setNotes(plan?.notes ?? ''); }, [plan]);
+  useEffect(() => {
+    if (!plan) {
+      setItems([]);
+      setNotes('');
+      return;
+    }
+    const cleanItems = [...plan.plan_items]
+      .sort((a, b) => a.sort - b.sort)
+      .map((it) => {
+        if (it.frequency.mode === 'per_week' && it.frequency.days.length > it.frequency.count) {
+          return { ...it, frequency: { ...it.frequency, days: it.frequency.days.slice(0, it.frequency.count) } };
+        }
+        return it;
+      });
+    setItems(cleanItems);
+    setNotes(plan.notes ?? '');
+  }, [plan]);
 
   const lead = ws.isLead;
   const locked = !lead || plan?.status === 'closed';
@@ -135,14 +151,44 @@ function Plans() {
                 <div className="field"><label>Content type</label><select value={i.content_type} disabled={locked} onChange={(e) => update(i.id, { content_type: e.target.value as ContentType })}>{CONTENT_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}</select></div>
                 <div className="field"><label>{f.mode === 'per_week' ? 'Per week' : 'Per month'}</label>
                   {f.mode === 'dates' ? <input value={f.dates.length} disabled />
-                    : f.mode === 'per_week' ? <input type="number" min={0} max={7} value={f.count} disabled={locked} onChange={(e) => update(i.id, { frequency: { ...f, count: Math.max(0, +e.target.value) } })} />
+                    : f.mode === 'per_week' ? <input type="number" min={1} max={7} value={f.count} disabled={locked} onChange={(e) => {
+                        const val = +e.target.value;
+                        const count = Math.min(7, Math.max(1, isNaN(val) ? 1 : val));
+                        let days = f.days;
+                        if (days.length > count) days = days.slice(0, count);
+                        update(i.id, { frequency: { ...f, count, days } });
+                      }} />
                     : <input type="number" min={0} max={62} value={i.monthly_count} disabled={locked} onChange={(e) => update(i.id, { monthly_count: Math.max(0, +e.target.value) })} />}</div>
                 <div className="field"><label>Posting rhythm</label><select value={f.mode} disabled={locked} onChange={(e) => update(i.id, { frequency: defaultFreq(e.target.value as Frequency['mode']) })}>{RHYTHM.map(([m, l]) => <option key={m} value={m}>{l}</option>)}</select></div>
                 {!locked ? <button className="icon-btn" title="Remove line" onClick={() => { if (confirm('Remove this line? Its untouched future tasks are removed too.')) act(() => api(`/api/plan-items/${i.id}`, { method: 'DELETE' }), 'Line removed'); }}><Icon name="trash" /></button> : <span />}
               </div>
-              {(f.mode === 'weekdays' || f.mode === 'per_week') && <div className="days">{WEEK.map((d) => (
-                <button key={d} className={f.days.includes(d) ? 'on' : ''} disabled={locked} onClick={() => update(i.id, { frequency: { ...f, days: f.days.includes(d) ? f.days.filter((x) => x !== d) : [...f.days, d] } })}>{d[0]}</button>
-              ))}</div>}
+              {(f.mode === 'weekdays' || f.mode === 'per_week') && <div>
+                <div className="days">{WEEK.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    title={d}
+                    className={f.days.includes(d) ? 'on' : ''}
+                    disabled={locked}
+                    onClick={() => {
+                      if (f.days.includes(d)) {
+                        update(i.id, { frequency: { ...f, days: f.days.filter((x) => x !== d) } });
+                      } else {
+                        if (f.mode === 'per_week' && f.days.length >= f.count) {
+                          toast(`Already selected ${f.count} day${f.count === 1 ? '' : 's'} for "${f.count} per week". Deselect a day first to change.`);
+                          return;
+                        }
+                        update(i.id, { frequency: { ...f, days: [...f.days, d] } });
+                      }
+                    }}
+                  >{d[0]}</button>
+                ))}</div>
+                {f.mode === 'per_week' && <small style={{ fontSize: 11, color: f.days.length < f.count ? '#d97706' : 'var(--muted)', display: 'block', marginTop: 4 }}>
+                  {f.days.length === f.count
+                    ? `${f.count} day${f.count === 1 ? '' : 's'} selected (${f.days.join(', ')})`
+                    : `Selected ${f.days.length} of ${f.count} days. Pick ${f.count - f.days.length} more.`}
+                </small>}
+              </div>}
               {f.mode === 'dates' && <>
                 <div className="row" style={{ marginTop: 10 }}><input type="date" className="input" style={{ width: 'auto' }} disabled={locked} min={`${month}-01`} max={`${month}-${daysInMonth(month)}`}
                   onChange={(e) => { const v = e.target.value; if (v) { const dates = [...new Set([...f.dates, v])].sort(); update(i.id, { frequency: { ...f, dates }, monthly_count: dates.length }); } }} /><small>Pick dates to add</small></div>
