@@ -159,8 +159,10 @@ function Plans() {
               {monthDays(month).map((d) => {
                 const l = preview[d] ?? [];
                 const unique = Array.from(new Set(l));
-                const singleClass = unique.length === 1 ? `t-${unique[0]}` : '';
-                const multiBg = unique.length > 1
+                const singleCol = unique.length === 1 ? CONTENT_TYPE_COLORS[unique[0]] : null;
+                const cellBg = singleCol
+                  ? singleCol.bg
+                  : unique.length > 1
                   ? `linear-gradient(135deg, ${unique.map((t, idx, arr) => {
                       const s = Math.round((idx / arr.length) * 100);
                       const e = Math.round(((idx + 1) / arr.length) * 100);
@@ -168,17 +170,38 @@ function Plans() {
                       return `${bg} ${s}%, ${bg} ${e}%`;
                     }).join(', ')})`
                   : undefined;
+                const cellBorder = singleCol
+                  ? `1.5px solid ${singleCol.border}`
+                  : unique.length > 1
+                  ? '1.5px solid #cbd5e1'
+                  : undefined;
+                const cellColor = singleCol
+                  ? singleCol.text
+                  : unique.length > 1
+                  ? '#1e293b'
+                  : undefined;
+
+                const labelText = l.length === 1
+                  ? (TYPE_LABEL[l[0]] ?? l[0])
+                  : unique.length === 1
+                  ? typeCount(l.length, l[0])
+                  : l.length === 2
+                  ? `${TYPE_LABEL[l[0]] ?? l[0]} + ${TYPE_LABEL[l[1]] ?? l[1]}`
+                  : `${l.length} tasks`;
+
                 return (
                   <div
                     key={d}
                     title={l.map((t) => TYPE_LABEL[t] ?? t).join(', ')}
-                    className={`d ${l.length ? 'has' : ''} ${singleClass} ${d === today ? 'today' : ''}`}
-                    style={multiBg ? { background: multiBg, borderColor: '#cbd5e1', color: '#1e293b' } : undefined}
+                    className={`d ${l.length ? 'has' : ''} ${d === today ? 'today' : ''}`}
+                    style={l.length ? { background: cellBg, border: cellBorder, color: cellColor, fontWeight: 600 } : undefined}
                   >
                     <span>{+d.slice(8)}</span>
                     {l.length > 0 && (
                       <>
-                        <small>{l.length} task{l.length > 1 ? 's' : ''}</small>
+                        <small className="cal-type-lbl" title={l.map((t) => TYPE_LABEL[t] ?? t).join(', ')}>
+                          {labelText}
+                        </small>
                         <div className="row" style={{ gap: 2, marginTop: 1 }}>
                           {l.map((t, idx) => (
                             <i key={idx} className={`cal-dot ${t}`} title={TYPE_LABEL[t] ?? t} />
