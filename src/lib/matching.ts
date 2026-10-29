@@ -7,6 +7,8 @@ import type { ContentType, Stage } from './types';
 export const AUTO = 70, SUGGEST = 40;
 const COMPATIBLE: [ContentType, ContentType][] = [
   ['poster', 'carousel'],
+  ['poster', 'special_days_poster'],
+  ['special_days_poster', 'carousel'],
   ['reel', 'video'],
   ['reel', 'creative_reel'],
   ['presentation_video', 'video'],

@@ -15,6 +15,7 @@ type PlanWithItems = Plan & { plan_items: PlanItem[] };
 const CAL_TYPE_LABEL: Record<ContentType, string> = {
   reel: 'Reel',
   poster: 'Poster',
+  special_days_poster: 'Spl. Poster',
   story: 'Story',
   carousel: 'Carousel',
   creative_reel: 'Creative',

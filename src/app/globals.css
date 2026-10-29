@@ -170,8 +170,9 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .type-ic svg{width:15px;height:15px}
 .type-ic.reel{background:#f3e8ff;color:#7c3aed}
 .type-ic.poster{background:#fee2e2;color:#dc2626}
+.type-ic.special_days_poster{background:#ffedd5;color:#ea580c}
 .type-ic.story{background:#dcfce7;color:#16a34a}
-.type-ic.creative_reel{background:#ffe4e6;color:#e11d48}
+.type-ic.creative_reel{background:#fdf2f8;color:#db2777}
 .type-ic.carousel{background:#dbeafe;color:#2563eb}
 .type-ic.presentation_video{background:#fef9c3;color:#ca8a04}
 .type-ic.video{background:#fef9c3;color:#ca8a04}
@@ -277,8 +278,9 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 /* content type colors in calendar */
 .cal .d.t-reel{background:#f3e8ff;border-color:#d8b4fe;color:#6b21a8;font-weight:600}
 .cal .d.t-poster{background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:600}
+.cal .d.t-special_days_poster{background:#ffedd5;border-color:#fb923c;color:#9a3412;font-weight:600}
 .cal .d.t-story{background:#dcfce7;border-color:#86efac;color:#166534;font-weight:600}
-.cal .d.t-creative_reel{background:#ffe4e6;border-color:#fda4af;color:#9f1239;font-weight:600}
+.cal .d.t-creative_reel{background:#fdf2f8;border-color:#f472b6;color:#9d174d;font-weight:600}
 .cal .d.t-carousel{background:#dbeafe;border-color:#93c5fd;color:#1e40af;font-weight:600}
 .cal .d.t-presentation_video{background:#fef9c3;border-color:#fde047;color:#854d0e;font-weight:600}
 .cal .d.t-video{background:#fef9c3;border-color:#fde047;color:#854d0e;font-weight:600}
@@ -288,8 +290,9 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex:none}
 .cal-dot.reel{background:#9333ea}
 .cal-dot.poster{background:#ef4444}
+.cal-dot.special_days_poster{background:#f97316}
 .cal-dot.story{background:#22c55e}
-.cal-dot.creative_reel{background:#f43f5e}
+.cal-dot.creative_reel{background:#db2777}
 .cal-dot.carousel{background:#3b82f6}
 .cal-dot.presentation_video{background:#eab308}
 .cal-dot.video{background:#eab308}
@@ -298,8 +301,9 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 /* colored tags for totals */
 .tag.t-reel{background:#f3e8ff;border-color:#d8b4fe;color:#6b21a8}
 .tag.t-poster{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+.tag.t-special_days_poster{background:#ffedd5;border-color:#fb923c;color:#9a3412}
 .tag.t-story{background:#dcfce7;border-color:#86efac;color:#166534}
-.tag.t-creative_reel{background:#ffe4e6;border-color:#fda4af;color:#9f1239}
+.tag.t-creative_reel{background:#fdf2f8;border-color:#f472b6;color:#9d174d}
 .tag.t-carousel{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
 .tag.t-presentation_video{background:#fef9c3;border-color:#fde047;color:#854d0e}
 .tag.t-video{background:#fef9c3;border-color:#fde047;color:#854d0e}

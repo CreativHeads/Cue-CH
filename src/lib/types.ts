@@ -1,5 +1,5 @@
-export const CONTENT_TYPES = ['reel', 'poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
-export const ALL_CONTENT_TYPES = ['reel', 'poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'video', 'other'] as const;
+export const CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
+export const ALL_CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'video', 'other'] as const;
 export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 export const STAGES = ['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'] as const;
 export type Stage = (typeof STAGES)[number];
@@ -16,6 +16,7 @@ export type Frequency =
 export const TYPE_LABEL: Record<ContentType, string> = {
   reel: 'Reel',
   poster: 'Poster',
+  special_days_poster: 'Special Days Poster',
   story: 'Story',
   creative_reel: 'Creative Reel',
   carousel: 'Carousel',
@@ -32,14 +33,15 @@ export interface ContentTypeColor {
 }
 
 export const CONTENT_TYPE_COLORS: Record<ContentType, ContentTypeColor> = {
-  reel: { bg: '#f3e8ff', border: '#d8b4fe', text: '#6b21a8', dot: '#9333ea' },
-  poster: { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' },
-  story: { bg: '#dcfce7', border: '#86efac', text: '#166534', dot: '#22c55e' },
-  creative_reel: { bg: '#ffe4e6', border: '#fda4af', text: '#9f1239', dot: '#f43f5e' },
-  carousel: { bg: '#dbeafe', border: '#93c5fd', text: '#1e40af', dot: '#3b82f6' },
-  presentation_video: { bg: '#fef9c3', border: '#fde047', text: '#854d0e', dot: '#eab308' },
-  video: { bg: '#fef9c3', border: '#fde047', text: '#854d0e', dot: '#eab308' },
-  other: { bg: '#e0f2fe', border: '#bae6fd', text: '#0369a1', dot: '#0ea5e9' },
+  reel: { bg: '#f3e8ff', border: '#c084fc', text: '#6b21a8', dot: '#9333ea' },
+  poster: { bg: '#fee2e2', border: '#f87171', text: '#991b1b', dot: '#ef4444' },
+  special_days_poster: { bg: '#ffedd5', border: '#fb923c', text: '#9a3412', dot: '#f97316' },
+  story: { bg: '#dcfce7', border: '#4ade80', text: '#166534', dot: '#16a34a' },
+  creative_reel: { bg: '#fdf2f8', border: '#f472b6', text: '#9d174d', dot: '#db2777' },
+  carousel: { bg: '#dbeafe', border: '#60a5fa', text: '#1e40af', dot: '#2563eb' },
+  presentation_video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
+  video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
+  other: { bg: '#e0f2fe', border: '#7dd3fc', text: '#0369a1', dot: '#0284c7' },
 };
 
 export const STAGE_LABEL: Record<Stage, string> = {
@@ -48,7 +50,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
 };
 /** "1 reel", "9 stories". */
 export const typeCount = (n: number, t: ContentType) =>
-  `${n} ${t === 'story' ? (n === 1 ? 'story' : 'stories') : (TYPE_LABEL[t] ?? t).toLowerCase() + (n === 1 ? '' : 's')}`;
+  `${n} ${t === 'story' ? (n === 1 ? 'story' : 'stories') : t === 'special_days_poster' ? (n === 1 ? 'special days poster' : 'special days posters') : (TYPE_LABEL[t] ?? t).toLowerCase() + (n === 1 ? '' : 's')}`;
 
 export const ROLE_LABEL: Record<Role, string> = { admin: 'Admin', lead: 'Creative lead', designer: 'Designer', editor: 'Editor' };
 

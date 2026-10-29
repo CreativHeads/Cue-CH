@@ -22,6 +22,7 @@ const PATHS: Record<string, string> = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   poster: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="9.5" cy="9" r="1.8"/><path d="M4 17l5-5 4 4 2-2 5 5"/>',
+  special_days_poster: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 17l5-5 4 4 2-2 5 5"/><path d="M12 6l.8 1.8 2 .3-1.4 1.4.3 2-1.7-.9-1.7.9.3-2-1.4-1.4 2-.3z"/>',
   reel: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l2 5M14 3l2 5M10 12v5l4-2.5z"/>',
   creative_reel: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l2 5M14 3l2 5M10 12v5l4-2.5z"/><path d="M19 3v4M21 5h-4"/>',
   carousel: '<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M4 7v10M20 7v10"/>',
