@@ -4,12 +4,17 @@ import { useSearchParams } from 'next/navigation';
 import { useWorkspace } from '@/components/AppShell';
 import { Icon } from '@/components/Icon';
 import { api, ClientLogo, ErrorBox, Loading, PageHead, Select, toast, useData } from '@/components/ui';
-import { daysInMonth, fmtD, fmtYM, monthDays, MONTHS, todayIST, ymAdd, ymOf } from '@/lib/dates';
+import { daysInMonth, dow, DOWS, fmtD, fmtYM, monthDays, MONTHS, todayIST, ymAdd, ymOf } from '@/lib/dates';
 import { itemDates } from '@/lib/generation';
 import { CONTENT_TYPES, CONTENT_TYPE_COLORS, TYPE_LABEL, typeCount, type ContentType, type Frequency, type Plan, type PlanItem, type Weekday } from '@/lib/types';
 
 const WEEK: Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const RHYTHM: [Frequency['mode'], string][] = [['weekdays', 'On weekdays'], ['per_week', 'Per week'], ['spread', 'Spread evenly'], ['dates', 'Fixed dates']];
+const RHYTHM: [Frequency['mode'], string][] = [
+  ['spread', 'Spread evenly'],
+  ['per_week', 'Per week'],
+  ['weekdays', 'Specific days of week'],
+  ['dates', 'Fixed dates'],
+];
 type PlanWithItems = Plan & { plan_items: PlanItem[] };
 
 const CAL_TYPE_LABEL: Record<ContentType, string> = {
@@ -54,8 +59,15 @@ function Plans() {
     const cleanItems = [...plan.plan_items]
       .sort((a, b) => a.sort - b.sort)
       .map((it) => {
-        if (it.frequency.mode === 'per_week' && it.frequency.days.length > it.frequency.count) {
-          return { ...it, frequency: { ...it.frequency, days: it.frequency.days.slice(0, it.frequency.count) } };
+        const f = it.frequency;
+        if (f.mode === 'per_week' && f.days.length > f.count) {
+          return { ...it, frequency: { ...f, days: f.days.slice(0, f.count) } };
+        }
+        if (f.mode === 'weekdays') {
+          const expectedCount = monthDays(month).filter((d) => f.days.includes(DOWS[dow(d)])).length;
+          if (it.monthly_count !== expectedCount) {
+            return { ...it, monthly_count: expectedCount };
+          }
         }
         return it;
       });
@@ -158,8 +170,22 @@ function Plans() {
                         if (days.length > count) days = days.slice(0, count);
                         update(i.id, { frequency: { ...f, count, days } });
                       }} />
+                    : f.mode === 'weekdays' ? <input value={monthDays(month).filter((d) => f.days.includes(DOWS[dow(d)])).length} disabled title="Automatically calculated from selected days in this month" />
                     : <input type="number" min={0} max={62} value={i.monthly_count} disabled={locked} onChange={(e) => update(i.id, { monthly_count: Math.max(0, +e.target.value) })} />}</div>
-                <div className="field"><label>Posting rhythm</label><select value={f.mode} disabled={locked} onChange={(e) => update(i.id, { frequency: defaultFreq(e.target.value as Frequency['mode']) })}>{RHYTHM.map(([m, l]) => <option key={m} value={m}>{l}</option>)}</select></div>
+                <div className="field"><label>Posting rhythm</label><select value={f.mode} disabled={locked} onChange={(e) => {
+                  const mode = e.target.value as Frequency['mode'];
+                  const newFreq = defaultFreq(mode);
+                  if (newFreq.mode === 'weekdays') {
+                    const count = monthDays(month).filter((day) => newFreq.days.includes(DOWS[dow(day)])).length;
+                    update(i.id, { frequency: newFreq, monthly_count: count });
+                  } else if (newFreq.mode === 'dates') {
+                    update(i.id, { frequency: newFreq, monthly_count: 0 });
+                  } else if (newFreq.mode === 'per_week') {
+                    update(i.id, { frequency: newFreq });
+                  } else {
+                    update(i.id, { frequency: newFreq, monthly_count: i.monthly_count || 4 });
+                  }
+                }}>{RHYTHM.map(([m, l]) => <option key={m} value={m}>{l}</option>)}</select></div>
                 {!locked ? <button className="icon-btn" title="Remove line" onClick={() => { if (confirm('Remove this line? Its untouched future tasks are removed too.')) act(() => api(`/api/plan-items/${i.id}`, { method: 'DELETE' }), 'Line removed'); }}><Icon name="trash" /></button> : <span />}
               </div>
               {(f.mode === 'weekdays' || f.mode === 'per_week') && <div>
@@ -171,14 +197,20 @@ function Plans() {
                     className={f.days.includes(d) ? 'on' : ''}
                     disabled={locked}
                     onClick={() => {
-                      if (f.days.includes(d)) {
-                        update(i.id, { frequency: { ...f, days: f.days.filter((x) => x !== d) } });
-                      } else {
-                        if (f.mode === 'per_week' && f.days.length >= f.count) {
-                          toast(`Already selected ${f.count} day${f.count === 1 ? '' : 's'} for "${f.count} per week". Deselect a day first to change.`);
-                          return;
+                      if (f.mode === 'weekdays') {
+                        const newDays = f.days.includes(d) ? f.days.filter((x) => x !== d) : [...f.days, d];
+                        const newCount = monthDays(month).filter((day) => newDays.includes(DOWS[dow(day)])).length;
+                        update(i.id, { frequency: { ...f, days: newDays }, monthly_count: newCount });
+                      } else if (f.mode === 'per_week') {
+                        if (f.days.includes(d)) {
+                          update(i.id, { frequency: { ...f, days: f.days.filter((x) => x !== d) } });
+                        } else {
+                          if (f.days.length >= f.count) {
+                            toast(`Already selected ${f.count} day${f.count === 1 ? '' : 's'} for "${f.count} per week". Deselect a day first to change.`);
+                            return;
+                          }
+                          update(i.id, { frequency: { ...f, days: [...f.days, d] } });
                         }
-                        update(i.id, { frequency: { ...f, days: [...f.days, d] } });
                       }
                     }}
                   >{d[0]}</button>
@@ -187,6 +219,11 @@ function Plans() {
                   {f.days.length === f.count
                     ? `${f.count} day${f.count === 1 ? '' : 's'} selected (${f.days.join(', ')})`
                     : `Selected ${f.days.length} of ${f.count} days. Pick ${f.count - f.days.length} more.`}
+                </small>}
+                {f.mode === 'weekdays' && <small style={{ fontSize: 11, color: f.days.length === 0 ? '#d97706' : 'var(--muted)', display: 'block', marginTop: 4 }}>
+                  {f.days.length === 0
+                    ? 'Select at least one day above.'
+                    : `${monthDays(month).filter((day) => f.days.includes(DOWS[dow(day)])).length} posts in ${MONTHS[+month.slice(5, 7) - 1]} (every ${f.days.join(', ')})`}
                 </small>}
               </div>}
               {f.mode === 'dates' && <>
