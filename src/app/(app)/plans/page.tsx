@@ -138,7 +138,7 @@ function Plans() {
     <div className="row wrap" style={{ justifyContent: 'space-between', marginBottom: 16 }}>
       <div className="row wrap">
         <Select icon="user" value={clientId} onChange={setClientId} options={ws.clients.map((c) => [c.id, c.name] as [string, string])} />
-        <label className="sel" style={{ paddingRight: 10 }}><Icon name="calendar" size={14} /><input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} style={{ border: 0, outline: 'none', padding: '7px 0', fontSize: 12 }} /></label>
+        <label className="sel no-arrow" style={{ paddingRight: 8 }}><Icon name="calendar" size={14} /><input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} style={{ border: 0, outline: 'none', padding: '6px 0', fontSize: 12.5 }} /></label>
         {statusBadge}
       </div>
       <span className="muted" style={{ fontSize: 12 }}>{plan ? `${total} deliverables · ` : ''}All times in IST</span>

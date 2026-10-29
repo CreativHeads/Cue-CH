@@ -22,7 +22,16 @@ h1,h2,h3,.stat .num,.cstats b,.metrics b{font-family:var(--head)}
 ::selection{background:#0a5cff26}
 *{scrollbar-width:thin;scrollbar-color:#c9d2e6 transparent}
 :focus{outline:none}
-:focus-visible{outline:none;box-shadow:var(--ring);border-radius:10px}
+:focus-visible{outline:none}
+button:focus-visible,
+a.btn:focus-visible,
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.chip-btn:focus-visible,
+.seg button:focus-visible{
+  box-shadow:var(--ring);
+  border-radius:10px;
+}
 a,button,.card,.btn,.nav a,.kcard,.list-item,.chip-btn,.sel,.input,.field input,.field select,.field textarea{
   transition:background .18s,border-color .18s,box-shadow .18s,color .18s,transform .18s;
 }
@@ -104,6 +113,9 @@ a,button,.card,.btn,.nav a,.kcard,.list-item,.chip-btn,.sel,.input,.field input,
 .seg button.on{box-shadow:0 1px 3px #141a2b1a,0 0 0 1px #e8ecf4;color:var(--brand-dark)}
 .sel,.chip-btn,.month-nav button{border-radius:11px;border-color:var(--line);box-shadow:0 1px 2px #141a2b08}
 .sel:hover,.chip-btn:hover,.month-nav button:hover{border-color:#c9d8ff;background:#f8faff}
+.sel:focus-within{border-color:#8fb0ff!important;box-shadow:var(--ring)!important;background:#fff!important}
+.sel select,.sel select:focus,.sel select:focus-visible,.sel input,.sel input:focus,.sel input:focus-visible{outline:none!important;box-shadow:none!important;-webkit-box-shadow:none!important;border:0!important;border-radius:0!important}
+.search input,.search input:focus,.search input:focus-visible{outline:none!important;box-shadow:none!important;-webkit-box-shadow:none!important}
 .month-nav button{width:30px;height:30px}
 .gtable th{color:#9aa2b4}
 .gtable th.today span{background:var(--grad-btn);border-radius:6px;padding:2px 5px;box-shadow:0 3px 8px -3px #0a5cff99}
