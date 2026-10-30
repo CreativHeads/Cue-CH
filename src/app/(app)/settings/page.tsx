@@ -72,7 +72,7 @@ export default function SettingsPage() {
               <div className="field"><label>Quiet hours start · IST</label><input type="time" value={s.quiet_start.slice(0, 5)} disabled={!admin} onChange={(e) => e.target.value && save({ quiet_start: e.target.value })} /></div>
               <div className="field"><label>Quiet hours end · IST</label><input type="time" value={s.quiet_end.slice(0, 5)} disabled={!admin} onChange={(e) => e.target.value && save({ quiet_end: e.target.value })} /></div>
             </div>
-            <p className="muted" style={{ fontSize: 11.5, marginBottom: 0 }}>The digest is sent by the scheduler at 9:00 AM IST; change the scheduler to move it.</p>
+            <p className="muted" style={{ fontSize: 11.5, marginBottom: 0 }}>The digest is sent by the scheduler at 7:00 AM IST; change the scheduler to move it.</p>
           </div>
 
           <div className="card card-pad" style={{ marginTop: 18 }}><h3>Copy guard</h3><div className="sub">These words are never sent in Telegram messages or client reports (whole word, any case).</div>

@@ -141,16 +141,28 @@ const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MAX_PER_PERSON = 12;
 
 /** The team group's morning message: today's tasks under each person, then unassigned, then overdue. */
-export function groupDigestText(today: string, todays: TaskRow[], overdue: TaskRow[], names: Record<string, string>) {
-  const who = (id: string | null) => (id ? names[id] ?? 'Former teammate' : 'Unassigned');
-  const byOwner = new Map<string, TaskRow[]>();
-  for (const t of todays) byOwner.set(who(t.owner_id), [...(byOwner.get(who(t.owner_id)) ?? []), t]);
+export function groupDigestText(today: string, todays: TaskRow[], overdue: TaskRow[], names: Record<string, string | { name: string; telegram_chat_id?: string | null }>) {
+  const staffOf = (id: string | null) => {
+    if (!id) return { name: 'Unassigned', mention: '<b>Unassigned</b>', telegram_chat_id: null };
+    const val = names[id];
+    if (!val) return { name: 'Former teammate', mention: '<b>Former teammate</b>', telegram_chat_id: null };
+    if (typeof val === 'string') return { name: val, mention: `<b>${esc(val)}</b>`, telegram_chat_id: null };
+    const mention = val.telegram_chat_id ? `<a href="tg://user?id=${val.telegram_chat_id}">@${esc(val.name)}</a>` : `<b>${esc(val.name)}</b>`;
+    return { name: val.name, mention, telegram_chat_id: val.telegram_chat_id ?? null };
+  };
+  const byOwner = new Map<string, { member: { name: string; mention: string }; tasks: TaskRow[] }>();
+  for (const t of todays) {
+    const s = staffOf(t.owner_id);
+    const existing = byOwner.get(s.name);
+    if (existing) existing.tasks.push(t);
+    else byOwner.set(s.name, { member: s, tasks: [t] });
+  }
   const order = [...byOwner.keys()].sort((a, b) => (a === 'Unassigned' ? 1 : b === 'Unassigned' ? -1 : a.localeCompare(b)));
   const lines = [`☀️ <b>Today’s tasks · ${DOW[new Date(`${today}T00:00:00Z`).getUTCDay()]}, ${fmtD(today)}</b>`];
   if (!todays.length) lines.push('', 'Nothing due today.');
-  for (const name of order) {
-    const list = byOwner.get(name)!;
-    lines.push('', `<b>${esc(name)}</b> (${list.length})`);
+  for (const key of order) {
+    const { member, tasks: list } = byOwner.get(key)!;
+    lines.push('', `${member.mention} (${list.length})`);
     for (const t of list.slice(0, MAX_PER_PERSON)) {
       lines.push(`• ${fmtT(istTime(t.due_at))} · ${esc(t.client)} · ${TYPE_LABEL[t.content_type]}${t.priority === 'high' ? ' · 🔺 High' : ''}\n   “${esc(t.title)}” · ${STAGE_LABEL[t.stage]}`);
     }
@@ -158,7 +170,11 @@ export function groupDigestText(today: string, todays: TaskRow[], overdue: TaskR
   }
   if (overdue.length) {
     lines.push('', `🔴 <b>Overdue</b> (${overdue.length})`);
-    for (const t of overdue.slice(0, MAX_PER_PERSON)) lines.push(`• ${esc(who(t.owner_id))}: ${esc(t.client)} ${TYPE_LABEL[t.content_type].toLowerCase()}, due ${fmtD(istDate(t.due_at))} · ${STAGE_LABEL[t.stage]}`);
+    for (const t of overdue.slice(0, MAX_PER_PERSON)) {
+      const s = staffOf(t.owner_id);
+      const tag = s.telegram_chat_id ? `<a href="tg://user?id=${s.telegram_chat_id}">@${esc(s.name)}</a>` : esc(s.name);
+      lines.push(`• ${tag}: ${esc(t.client)} ${TYPE_LABEL[t.content_type].toLowerCase()}, due ${fmtD(istDate(t.due_at))} · ${STAGE_LABEL[t.stage]}`);
+    }
     if (overdue.length > MAX_PER_PERSON) lines.push(`   …and ${overdue.length - MAX_PER_PERSON} more`);
   }
   return lines.join('\n');
@@ -179,10 +195,10 @@ async function digest(d: Driver, now: Date, fetcher?: typeof fetch): Promise<Sta
       [toDueAt(today, '00:00'), toDueAt(addDays(today, 1), '00:00')], d);
     const overdue = await rows<TaskRow>(`${TASK_SELECT} where t.stage <> 'posted' and t.due_at < $1 and t.due_at > $2 order by t.due_at`,
       [toDueAt(today, '00:00'), toDueAt(addDays(today, -14), '00:00')], d);
-    const names = Object.fromEntries((await rows<{ id: string; name: string }>(`select id, name from staff`, [], d)).map((x) => [x.id, x.name]));
+    const staffMap = Object.fromEntries(staff.map((x) => [x.id, { name: x.name, telegram_chat_id: x.telegram_chat_id }]));
     const board = appUrl('/board');
     results.push(await notifyChat(d, s.team_group_chat_id!, { kind: 'digest_group', dedupeKey: `digest_group:${today}`,
-      text: groupDigestText(today, todays, overdue, names), buttons: board ? [[{ text: 'Open the board', url: board }]] : undefined }, s, { now, fetcher }));
+      text: groupDigestText(today, todays, overdue, staffMap), buttons: board ? [[{ text: 'Open the board', url: board }]] : undefined }, s, { now, fetcher }));
   }
   if (!toPersonal) return tally(results);
   for (const p of staff) {

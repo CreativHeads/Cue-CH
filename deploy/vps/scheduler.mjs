@@ -17,7 +17,7 @@ const RULES = [
   ['sync-posts',   (t) => t.minute === 30 && (t.hour + 1) % 3 === 0],                 // 02:30, 05:30, 08:30 … every 3 hours
   ['sync-stories', (t) => t.minute === 45 && t.hour % 2 === 1],                       // every 2 hours at :45
   ['reminders',    (t) => t.minute % 15 === 0],                                       // every 15 minutes
-  ['digest',       (t) => t.hour === 9 && t.minute === 0],                            // 09:00 daily
+  ['digest',       (t) => t.hour === 7 && t.minute === 0],                            // 07:00 daily
   ['inactivity',   (t) => t.hour === 10 && t.minute === 0],                           // 10:00 daily
   ['carry-over',   (t) => t.weekday === 'Mon' && t.hour === 0 && t.minute === 15],    // Monday 00:15
   ['month-close',  (t) => (t.day === 1 || t.day === 8) && t.hour === 5 && t.minute === 30],

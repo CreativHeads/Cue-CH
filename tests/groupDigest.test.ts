@@ -20,6 +20,12 @@ describe('groupDigestText', () => {
     expect(text).toContain('Overdue</b> (1)');
     expect(text).toContain('Raheesha: Dentcom carousel, due 28 Oct');
   });
+  it('mentions teammates with tg://user?id link when they are linked to Telegram', () => {
+    const text = groupDigestText('2026-10-30', [
+      t('s', 'Level8', 'reel', '2026-10-30T09:30:00Z', 'Behind the scenes', 'to_brief'),
+    ], [], { s: { name: 'Sinan', telegram_chat_id: '8536045660' } });
+    expect(text).toContain('<a href="tg://user?id=8536045660">@Sinan</a>');
+  });
   it('says so when nothing is due', () => {
     expect(groupDigestText('2026-11-01', [], [], names)).toContain('Nothing due today.');
   });
