@@ -4,11 +4,13 @@ import { DEFAULT_BANNED } from '@/lib/copyGuard';
 import { row, setClause } from '@/lib/db';
 import { time } from '@/lib/schemas';
 
-const COLS = ['digest_enabled', 'nudge_enabled', 'overdue_enabled', 'inactivity_enabled', 'quiet_hours_enabled', 'quiet_start', 'quiet_end', 'digest_time', 'banned_terms'] as const;
+const COLS = ['digest_enabled', 'nudge_enabled', 'overdue_enabled', 'inactivity_enabled', 'quiet_hours_enabled', 'quiet_start', 'quiet_end', 'digest_time', 'banned_terms', 'team_group_chat_id', 'digest_target'] as const;
 const patch = z.object({
   digest_enabled: z.boolean(), nudge_enabled: z.boolean(), overdue_enabled: z.boolean(), inactivity_enabled: z.boolean(),
   quiet_hours_enabled: z.boolean(), quiet_start: time, quiet_end: time, digest_time: time,
   banned_terms: z.array(z.string().trim().toLowerCase().min(2).max(40)).max(100),
+  team_group_chat_id: z.string().trim().regex(/^-?\d{5,20}$/, 'Group chat ID: a number like -1001234567890').nullable(),
+  digest_target: z.enum(['personal', 'group', 'both']),
 }).partial();
 
 export const GET = handler(async () => {

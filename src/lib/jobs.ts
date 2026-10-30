@@ -4,7 +4,7 @@ import { db, row, rows, type Db, type Driver } from './db';
 import { fetchWindsor, POST_FIELDS, postsWindow, STORY_FIELDS, storiesWindow, upsertPosts } from './instagram';
 import { matchClient, revertDeleted } from './matching';
 import { deliveryScore, scoreParts } from './score';
-import { esc, getSettings, leadsAndAdmins, notify, type Notice, type NoticeResult } from './telegram';
+import { esc, getSettings, leadsAndAdmins, notify, notifyChat, type Notice, type NoticeResult } from './telegram';
 import { STAGE_LABEL, TYPE_LABEL, typeCount, type ContentType, type Stage } from './types';
 
 export const JOBS = ['sync-posts', 'sync-stories', 'reminders', 'digest', 'inactivity', 'carry-over', 'month-close', 'next-month'] as const;
@@ -96,7 +96,7 @@ async function alertIfStale(d: Driver, job: JobName, now: Date) {
 }
 
 // ---------- Phase 3: reminders ----------
-interface TaskRow { id: string; title: string; client_id: string; client: string; content_type: ContentType; due_at: string; stage: Stage; owner_id: string | null; priority: string; carried_over_from: string | null; delivery: string | null }
+export interface TaskRow { id: string; title: string; client_id: string; client: string; content_type: ContentType; due_at: string; stage: Stage; owner_id: string | null; priority: string; carried_over_from: string | null; delivery: string | null }
 const TASK_SELECT = `select t.id, t.title, t.client_id, c.name as client, t.content_type, t.due_at, t.stage, t.owner_id, t.priority, t.carried_over_from, t.delivery
   from tasks t join clients c on c.id = t.client_id`;
 const nextStage = (s: Stage): Stage | null => (['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'] as Stage[])[['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'].indexOf(s) + 1] ?? null;
@@ -137,6 +137,33 @@ async function reminders(d: Driver, now: Date, fetcher?: typeof fetch): Promise<
   return tally(results);
 }
 
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MAX_PER_PERSON = 12;
+
+/** The team group's morning message: today's tasks under each person, then unassigned, then overdue. */
+export function groupDigestText(today: string, todays: TaskRow[], overdue: TaskRow[], names: Record<string, string>) {
+  const who = (id: string | null) => (id ? names[id] ?? 'Former teammate' : 'Unassigned');
+  const byOwner = new Map<string, TaskRow[]>();
+  for (const t of todays) byOwner.set(who(t.owner_id), [...(byOwner.get(who(t.owner_id)) ?? []), t]);
+  const order = [...byOwner.keys()].sort((a, b) => (a === 'Unassigned' ? 1 : b === 'Unassigned' ? -1 : a.localeCompare(b)));
+  const lines = [`☀️ <b>Today’s tasks · ${DOW[new Date(`${today}T00:00:00Z`).getUTCDay()]}, ${fmtD(today)}</b>`];
+  if (!todays.length) lines.push('', 'Nothing due today.');
+  for (const name of order) {
+    const list = byOwner.get(name)!;
+    lines.push('', `<b>${esc(name)}</b> (${list.length})`);
+    for (const t of list.slice(0, MAX_PER_PERSON)) {
+      lines.push(`• ${fmtT(istTime(t.due_at))} · ${esc(t.client)} · ${TYPE_LABEL[t.content_type]}${t.priority === 'high' ? ' · 🔺 High' : ''}\n   “${esc(t.title)}” · ${STAGE_LABEL[t.stage]}`);
+    }
+    if (list.length > MAX_PER_PERSON) lines.push(`   …and ${list.length - MAX_PER_PERSON} more`);
+  }
+  if (overdue.length) {
+    lines.push('', `🔴 <b>Overdue</b> (${overdue.length})`);
+    for (const t of overdue.slice(0, MAX_PER_PERSON)) lines.push(`• ${esc(who(t.owner_id))}: ${esc(t.client)} ${TYPE_LABEL[t.content_type].toLowerCase()}, due ${fmtD(istDate(t.due_at))} · ${STAGE_LABEL[t.stage]}`);
+    if (overdue.length > MAX_PER_PERSON) lines.push(`   …and ${overdue.length - MAX_PER_PERSON} more`);
+  }
+  return lines.join('\n');
+}
+
 async function digest(d: Driver, now: Date, fetcher?: typeof fetch): Promise<Stats> {
   const s = await getSettings(d);
   if (!s.digest_enabled) return { note: 'digest turned off' };
@@ -144,6 +171,20 @@ async function digest(d: Driver, now: Date, fetcher?: typeof fetch): Promise<Sta
   const staff = await rows<{ id: string; name: string; role: string; telegram_chat_id: string | null }>(`select id, name, role, telegram_chat_id from staff where is_active`, [], d);
   const unlinked = staff.filter((x) => !x.telegram_chat_id).map((x) => x.name);
   const results: NoticeResult[] = [];
+  const toGroup = s.digest_target !== 'personal' && !!s.team_group_chat_id;
+  const toPersonal = s.digest_target !== 'group' || !s.team_group_chat_id;
+
+  if (toGroup) {
+    const todays = await rows<TaskRow>(`${TASK_SELECT} where t.stage <> 'posted' and t.due_at >= $1 and t.due_at < $2 order by t.due_at, c.name`,
+      [toDueAt(today, '00:00'), toDueAt(addDays(today, 1), '00:00')], d);
+    const overdue = await rows<TaskRow>(`${TASK_SELECT} where t.stage <> 'posted' and t.due_at < $1 and t.due_at > $2 order by t.due_at`,
+      [toDueAt(today, '00:00'), toDueAt(addDays(today, -14), '00:00')], d);
+    const names = Object.fromEntries((await rows<{ id: string; name: string }>(`select id, name from staff`, [], d)).map((x) => [x.id, x.name]));
+    const board = appUrl('/board');
+    results.push(await notifyChat(d, s.team_group_chat_id!, { kind: 'digest_group', dedupeKey: `digest_group:${today}`,
+      text: groupDigestText(today, todays, overdue, names), buttons: board ? [[{ text: 'Open the board', url: board }]] : undefined }, s, { now, fetcher }));
+  }
+  if (!toPersonal) return tally(results);
   for (const p of staff) {
     const lead = p.role === 'lead' || p.role === 'admin';
     const mine = (sql: string, params: unknown[]) => rows<TaskRow>(`${TASK_SELECT} where ${lead ? 'true' : 't.owner_id = $1'} and ${sql} order by t.priority desc, t.due_at`,

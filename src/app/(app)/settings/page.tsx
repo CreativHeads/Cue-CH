@@ -8,6 +8,7 @@ import { bannedTermsIn } from '@/lib/copyGuard';
 interface Settings {
   digest_enabled: boolean; nudge_enabled: boolean; overdue_enabled: boolean; inactivity_enabled: boolean; quiet_hours_enabled: boolean;
   quiet_start: string; quiet_end: string; digest_time: string; banned_terms: string[]; default_banned: string[]; telegram_bot: string | null;
+  team_group_chat_id: string | null; digest_target: 'personal' | 'group' | 'both';
 }
 interface Health {
   jobs: { job: string; label: string; last: { started_at: string; status: string | null; error: string | null; stats: Record<string, unknown> | null } | null; lastSuccess: string | null; stale: boolean }[];
@@ -26,13 +27,18 @@ export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
   const [term, setTerm] = useState('');
   const [test, setTest] = useState('');
-  useEffect(() => { if (settings.data) setS(settings.data); }, [settings.data]);
+  const [group, setGroup] = useState('');
+  useEffect(() => { if (settings.data) { setS(settings.data); setGroup(settings.data.team_group_chat_id ?? ''); } }, [settings.data]);
   const admin = ws.isAdmin;
 
   async function save(patch: Partial<Settings>) {
     if (!s) return;
     setS({ ...s, ...patch });
     try { await api('/api/settings', { method: 'PATCH', json: patch }); toast('Saved'); } catch (e) { toast((e as Error).message); settings.reload(); }
+  }
+  async function testGroup() {
+    try { await api('/api/settings/telegram-test', { method: 'POST', json: { chat_id: group.trim() } }); toast('Test message sent. Check the group.'); }
+    catch (e) { toast((e as Error).message); }
   }
   async function connectTelegram() {
     try { const r = await api<{ url: string }>('/api/telegram/link-code', { method: 'POST' }); window.open(r.url, '_blank', 'noopener'); toast('Press Start in Telegram to finish'); }
@@ -86,6 +92,21 @@ export default function SettingsPage() {
                 <small>{ws.staff.filter((x) => x.telegram_chat_id).length} of {ws.staff.filter((x) => x.is_active).length} teammates linked · you: {ws.me.telegram_chat_id ? 'linked' : 'not linked'}</small></div>
               {h.config.telegramWebhook && s.telegram_bot ? <button className="btn sm" onClick={connectTelegram}>Connect Telegram</button> : null}</div>
             {!h.config.telegramWebhook && <p className="muted" style={{ fontSize: 11.5 }}>Send-only mode: the admin adds each person’s Telegram chat ID on the Team screen. Self-linking and tap-to-approve buttons turn on when the tracker has its own bot.</p>}
+            <div className="group-box">
+              <b>Team group</b>
+              <small>Post everyone’s tasks for the day to one Telegram group each morning. Add the bot{s.telegram_bot ? ` (@${s.telegram_bot})` : ''} to the group first, then paste the group’s chat ID. It starts with -100.</small>
+              <div className="row" style={{ marginTop: 8, gap: 6 }}>
+                <input className="input" value={group} disabled={!admin} onChange={(e) => setGroup(e.target.value)} placeholder="-1001234567890" />
+                {admin && <button className="btn sm" disabled={!group.trim()} onClick={testGroup}>Send test</button>}
+                {admin && <button className="btn sm primary" disabled={group.trim() === (s.team_group_chat_id ?? '')} onClick={() => save({ team_group_chat_id: group.trim() || null })}>Save</button>}
+              </div>
+              <div className="field" style={{ marginTop: 10 }}><label>Morning digest goes to</label>
+                <select value={s.digest_target} disabled={!admin} onChange={(e) => save({ digest_target: e.target.value as Settings['digest_target'] })}>
+                  <option value="personal">Each person’s own chat</option>
+                  <option value="group" disabled={!s.team_group_chat_id}>The team group only</option>
+                  <option value="both" disabled={!s.team_group_chat_id}>Both</option>
+                </select></div>
+            </div>
             <div className="conn"><span className="ic" style={{ background: '#fbeef4', color: '#b4588a' }}><Icon name="insta" /></span>
               <div><b>Instagram data {h.config.instagram ? '' : '(not set up on the server yet)'}</b><small>{ws.clients.filter((c) => c.is_connected).length} client accounts marked connected</small></div></div>
           </div>

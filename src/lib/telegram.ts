@@ -7,6 +7,7 @@ export interface Button { text: string; data?: string; url?: string }
 export interface Settings {
   digest_enabled: boolean; nudge_enabled: boolean; overdue_enabled: boolean; inactivity_enabled: boolean;
   quiet_hours_enabled: boolean; quiet_start: string; quiet_end: string; digest_time: string; banned_terms: string[];
+  team_group_chat_id: string | null; digest_target: 'personal' | 'group' | 'both';
 }
 
 export const getSettings = async (on?: Db) => (await row<Settings>(`select * from app_settings where id = 1`, [], on))!;
@@ -81,6 +82,33 @@ export async function notify(on: Db, n: Notice, settings: Settings, opts: { now?
   if (!telegramConfigured()) { await log('Telegram is not set up on the server'); return 'disabled'; }
   try {
     const id = await sendMessage(staff.telegram_chat_id, n.text, n.buttons, opts.fetcher);
+    await log(null, id);
+    return 'sent';
+  } catch (e) {
+    await log(`Send failed: ${(e as Error).message}`);
+    return 'failed';
+  }
+}
+
+/** Like notify, but to a group chat (the team group) rather than one teammate. */
+export async function notifyChat(on: Db, chatId: string, n: Omit<Notice, 'staffId'>, settings: Settings, opts: { now?: Date; fetcher?: typeof fetch } = {}): Promise<NoticeResult> {
+  if (await row(`select 1 from notifications where dedupe_key = $1`, [n.dedupeKey], on)) return 'duplicate';
+  if (settings.quiet_hours_enabled && !n.urgent && inQuietHours(istTime(opts.now ?? new Date()), settings.quiet_start, settings.quiet_end)) return 'held';
+
+  const log = (error: string | null, messageId: number | null = null) => on.query(
+    `insert into notifications (staff_id, kind, task_id, client_id, dedupe_key, text, telegram_message_id, sent_at, error)
+     values (null, $1, $2, $3, $4, $5, $6, case when $7::text is null then now() end, $7) on conflict (dedupe_key) do nothing`,
+    [n.kind, n.taskId ?? null, n.clientId ?? null, n.dedupeKey, n.text, messageId, error]);
+
+  try {
+    assertClientSafe(n.text + ' ' + (n.buttons ?? []).flat().map((b) => b.text).join(' '), settings.banned_terms);
+  } catch (e) {
+    await log((e as CopyGuardError).message);
+    return 'blocked';
+  }
+  if (!telegramConfigured()) { await log('Telegram is not set up on the server'); return 'disabled'; }
+  try {
+    const id = await sendMessage(chatId, n.text, n.buttons, opts.fetcher);
     await log(null, id);
     return 'sent';
   } catch (e) {

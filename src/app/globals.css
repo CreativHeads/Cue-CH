@@ -466,3 +466,6 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .ttable td.due{white-space:nowrap}
 .kcard .more-btn{border:0;background:none;color:var(--muted);padding:0 4px;font-size:15px;line-height:1;cursor:pointer}
 .kcard .menu{right:8px;top:30px}
+.group-box{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe}
+.group-box b{font-size:13px;display:block}
+.group-box small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45}
