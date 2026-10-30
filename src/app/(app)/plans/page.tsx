@@ -273,7 +273,7 @@ function Plans() {
                   ? `linear-gradient(135deg, ${unique.map((t, idx, arr) => {
                       const s = Math.round((idx / arr.length) * 100);
                       const e = Math.round(((idx + 1) / arr.length) * 100);
-                      const bg = CONTENT_TYPE_COLORS[t]?.bg ?? '#f3f6fb';
+                      const bg = CONTENT_TYPE_COLORS[t]?.stripe ?? CONTENT_TYPE_COLORS[t]?.bg ?? '#f3f6fb';
                       return `${bg} ${s}%, ${bg} ${e}%`;
                     }).join(', ')})`
                   : undefined;

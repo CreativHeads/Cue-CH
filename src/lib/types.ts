@@ -30,14 +30,16 @@ export interface ContentTypeColor {
   border: string;
   text: string;
   dot: string;
+  /** Lighter stand-in used in multi-type calendar gradients, when bg is too dark for text. */
+  stripe?: string;
 }
 
 export const CONTENT_TYPE_COLORS: Record<ContentType, ContentTypeColor> = {
   reel: { bg: '#f3e8ff', border: '#c084fc', text: '#6b21a8', dot: '#9333ea' },
   poster: { bg: '#fee2e2', border: '#f87171', text: '#991b1b', dot: '#ef4444' },
-  special_days_poster: { bg: '#fce7f3', border: '#f472b6', text: '#9d174d', dot: '#db2777' },
+  special_days_poster: { bg: '#1e293b', border: '#0f172a', text: '#ffffff', dot: '#1e293b', stripe: '#94a3b8' },
   story: { bg: '#dcfce7', border: '#4ade80', text: '#166534', dot: '#16a34a' },
-  creative_reel: { bg: '#efe3d6', border: '#c4a07a', text: '#5b3a1e', dot: '#8b5a2b' },
+  creative_reel: { bg: '#ccfbf1', border: '#2dd4bf', text: '#0f766e', dot: '#14b8a6' },
   carousel: { bg: '#dbeafe', border: '#60a5fa', text: '#1e40af', dot: '#2563eb' },
   presentation_video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
   video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
