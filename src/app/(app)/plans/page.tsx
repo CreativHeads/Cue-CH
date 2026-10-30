@@ -3,11 +3,11 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWorkspace } from '@/components/AppShell';
 import { Icon } from '@/components/Icon';
-import { api, ClientLogo, ErrorBox, Loading, PageHead, Select, toast, useData } from '@/components/ui';
-import { daysInMonth, dow, DOWS, fmtD, fmtYM, monthDays, MONTHS, todayIST, ymAdd, ymOf } from '@/lib/dates';
+import { api, Avatar, ClientLogo, ErrorBox, Loading, PageHead, Select, toast, useData } from '@/components/ui';
+import { daysInMonth, dow, DOWS, fmtD, fmtT, fmtYM, istDate, istTime, monthDays, MONTHS, todayIST, ymAdd, ymOf } from '@/lib/dates';
 import { itemDates } from '@/lib/generation';
 import { specialDays } from '@/lib/specialDays';
-import { CONTENT_TYPES, CONTENT_TYPE_COLORS, TYPE_LABEL, typeCount, type ContentType, type Frequency, type Plan, type PlanItem, type Weekday } from '@/lib/types';
+import { CONTENT_TYPES, CONTENT_TYPE_COLORS, STAGE_LABEL, TYPE_LABEL, typeCount, type ContentType, type Frequency, type Plan, type PlanItem, type Task, type Weekday } from '@/lib/types';
 
 const WEEK: Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const RHYTHM: [Frequency['mode'], string][] = [
@@ -54,6 +54,9 @@ function Plans() {
   useEffect(() => { try { if (localStorage.getItem('plans.specialDays') === '0') setShowSpecial(false); } catch {} }, []);
   const toggleSpecial = () => setShowSpecial((v) => { try { localStorage.setItem('plans.specialDays', v ? '0' : '1'); } catch {} return !v; });
   const special = showSpecial ? specialDays(month) : {};
+  const [sel, setSel] = useState<string | null>(null);
+  useEffect(() => setSel(null), [clientId, month]);
+  const { data: monthTasks } = useData<Task[]>(clientId && plan && plan.status !== 'draft' ? `/api/tasks?client=${clientId}&from=${month}-01&to=${month}-${daysInMonth(month)}` : null, [ws.version]);
 
   useEffect(() => {
     if (!plan) {
@@ -112,13 +115,14 @@ function Plans() {
 
   // live preview, computed with the same rules the server uses
   const preview: Record<string, ContentType[]> = {};
+  const previewItems: Record<string, PlanItem[]> = {};
   const warnings: string[] = [];
   let total = 0;
   const totals: Partial<Record<ContentType, number>> = {};
   for (const i of items) {
     const { dates, warning } = itemDates(i, month);
     if (warning) warnings.push(`${TYPE_LABEL[i.content_type]}: ${warning}`);
-    dates.forEach((d) => (preview[d] ||= []).push(i.content_type));
+    dates.forEach((d) => { (preview[d] ||= []).push(i.content_type); (previewItems[d] ||= []).push(i); });
     total += dates.length;
     totals[i.content_type] = (totals[i.content_type] ?? 0) + dates.length;
   }
@@ -297,7 +301,8 @@ function Plans() {
                   <div
                     key={d}
                     title={[...(sp ?? []), ...l.map((t) => TYPE_LABEL[t] ?? t)].join(', ')}
-                    className={`d ${l.length ? 'has' : ''} ${d === today ? 'today' : ''}`}
+                    className={`d click ${l.length ? 'has' : ''} ${d === today ? 'today' : ''} ${d === sel ? 'sel' : ''}`}
+                    onClick={() => setSel(d === sel ? null : d)}
                     style={l.length ? { background: cellBg, border: cellBorder, color: cellColor, fontWeight: 600 } : undefined}
                   >
                     {sp && <i className="sp-dot" />}
@@ -334,6 +339,34 @@ function Plans() {
             </div>}
             {warnings.map((w) => <div key={w} className="warn-box">⚠ {w}</div>)}
           </div>
+          {sel && (() => {
+            const dayTasks = (monthTasks ?? []).filter((t) => istDate(t.due_at) === sel);
+            const planned = previewItems[sel] ?? [];
+            const sp = specialDays(month)[sel] ?? [];
+            return <div className="card day-panel" style={{ marginTop: 14 }}>
+              <div className="card-pad row" style={{ justifyContent: 'space-between' }}>
+                <div><h3>{['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dow(sel)]}, {fmtD(sel)}</h3>
+                  <div className="sub">{plan.status === 'draft' ? `${planned.length} planned` : `${dayTasks.length} task${dayTasks.length === 1 ? '' : 's'}`}{sel === today ? ' · Today' : ''}</div></div>
+                <button className="icon-btn" title="Close" onClick={() => setSel(null)}>×</button>
+              </div>
+              {sp.length > 0 && <div className="day-special">{sp.map((n) => <span key={n}><i className="sp-dot" />{n}</span>)}</div>}
+              {plan.status !== 'draft' ? (
+                !monthTasks ? <Loading /> : dayTasks.length ? dayTasks.map((t) => (
+                  <div key={t.id} className="list-item" onClick={() => ws.openTask(t.id)}>
+                    <span className={`type-ic ${t.content_type}`}><Icon name={t.content_type} /></span>
+                    <div className="t"><b>{t.title}</b><small className="muted">{TYPE_LABEL[t.content_type]} · {fmtT(istTime(t.due_at))} IST</small></div>
+                    <Avatar staff={ws.staffById(t.owner_id)} sm />
+                    <span className={`badge st-${t.stage}`}>{STAGE_LABEL[t.stage]}</span>
+                  </div>
+                )) : <div className="empty">No tasks on this day.</div>
+              ) : planned.length ? planned.map((i, k) => (
+                <div key={`${i.id}${k}`} className="list-item" style={{ cursor: 'default' }}>
+                  <span className={`type-ic ${i.content_type}`}><Icon name={i.content_type} /></span>
+                  <div className="t"><b>{TYPE_LABEL[i.content_type]}</b><small className="muted">{fmtT(i.posting_time)} IST · created when you activate the plan</small></div>
+                </div>
+              )) : <div className="empty">Nothing planned for this day.</div>}
+            </div>;
+          })()}
           <div className="info-bar" style={{ marginTop: 14 }}><Icon name="info" size={15} />{plan.status === 'draft' ? 'Preview the generated dates before activation. The team’s tasks are created when you activate.' : 'Regenerating only updates untouched future tasks. Work already in progress or posted is never moved.'}</div>
         </div>
       </div>
