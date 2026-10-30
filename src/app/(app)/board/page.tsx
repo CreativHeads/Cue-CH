@@ -5,7 +5,7 @@ import { useWorkspace } from '@/components/AppShell';
 import { Icon } from '@/components/Icon';
 import { api, Avatar, ErrorBox, Loading, PageHead, Select, toast, useData } from '@/components/ui';
 import { addDays, daysInMonth, fmtT, istDate, istTime, mondayOf, relDay, todayIST, ymOf } from '@/lib/dates';
-import { FILTER_CONTENT_TYPES, STAGES, STAGE_LABEL, TYPE_LABEL, type Stage, type Task } from '@/lib/types';
+import { CONTENT_TYPES, STAGES, STAGE_LABEL, TYPE_LABEL, type Stage, type Task } from '@/lib/types';
 
 const DOT: Record<Stage, string> = { to_brief: '#a9aea9', designing: '#8b80cf', client_review: '#d9a249', approved: '#7aa954', scheduled: '#7d8fd0', posted: '#215c46' };
 
@@ -59,7 +59,7 @@ function Board() {
     <div className="row wrap" style={{ marginBottom: 10 }}>
       <Select icon="clients" value={client} onChange={setClient} options={[['', 'All clients'], ...ws.clients.map((c) => [c.id, c.name] as [string, string])]} />
       <Select icon="user" value={owner} onChange={setOwner} options={[['', 'All owners'], ...ws.staff.filter((s) => s.is_active).map((s) => [s.id, s.name] as [string, string])]} />
-      <Select icon="overview" value={type} onChange={setType} options={[['', 'All content types'], ...FILTER_CONTENT_TYPES.map((t) => [t, TYPE_LABEL[t]] as [string, string])]} />
+      <Select icon="overview" value={type} onChange={setType} options={[['', 'All content types'], ...CONTENT_TYPES.map((t) => [t, TYPE_LABEL[t]] as [string, string])]} />
       <button className={`chip-btn ${problems ? 'on' : ''}`} onClick={() => setProblems(!problems)}><Icon name="flag" size={14} />Only problems</button>
     </div>
     <div className="row wrap">

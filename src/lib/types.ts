@@ -1,7 +1,4 @@
-/** Types offered in pickers. Special days posters are chosen via a tick under Poster. */
-export const CONTENT_TYPES = ['reel', 'poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
-/** Types offered in filters. */
-export const FILTER_CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
+export const CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
 export const ALL_CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'video', 'other'] as const;
 export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 export const STAGES = ['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'] as const;
