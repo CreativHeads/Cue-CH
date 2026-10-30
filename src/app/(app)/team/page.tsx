@@ -11,6 +11,7 @@ export default function Team() {
   const { data } = useData<Task[]>('/api/tasks?open=true', [ws.version]);
   const [adding, setAdding] = useState(false);
   const [deactivating, setDeactivating] = useState<Staff | null>(null);
+  const [deleting, setDeleting] = useState<Staff | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [resetting, setResetting] = useState<Staff | null>(null);
   const [tg, setTg] = useState<Staff | null>(null);
@@ -26,6 +27,10 @@ export default function Team() {
   }
   async function setActive(s: Staff, is_active: boolean, reassign_to?: string) {
     try { await api(`/api/staff/${s.id}`, { method: 'PATCH', json: { is_active, ...(reassign_to ? { reassign_to } : {}) } }); toast(is_active ? `${s.name} reactivated` : `${s.name} deactivated`); setDeactivating(null); ws.reloadWorkspace(); ws.bump(); }
+    catch (e) { toast((e as Error).message); }
+  }
+  async function remove(s: Staff, reassign_to?: string) {
+    try { await api(`/api/staff/${s.id}${reassign_to ? `?reassign_to=${reassign_to}` : ''}`, { method: 'DELETE' }); toast(`${s.name} deleted`); setDeleting(null); ws.reloadWorkspace(); ws.bump(); }
     catch (e) { toast((e as Error).message); }
   }
 
@@ -46,6 +51,7 @@ export default function Team() {
             {ws.isAdmin && <button className="btn sm" onClick={() => setTg(s)}>{s.telegram_chat_id ? 'Telegram ✓' : 'Telegram'}</button>}
             {ws.isAdmin && s.id !== ws.me.id && <button className="btn sm" onClick={() => setResetting(s)}>Reset password</button>}
             {ws.isAdmin && s.id !== ws.me.id && <button className="btn sm" onClick={() => (s.is_active ? setDeactivating(s) : setActive(s, true))}>{s.is_active ? 'Deactivate' : 'Activate'}</button>}
+            {ws.isAdmin && s.id !== ws.me.id && <button className="btn sm danger" onClick={() => setDeleting(s)}>Delete</button>}
           </div>;
         })}
       </div>
@@ -66,7 +72,20 @@ export default function Team() {
     {tg && <TelegramModal staff={tg} onClose={() => setTg(null)} />}
     {editing && <EditModal staff={editing} onClose={() => setEditing(null)} />}
     {deactivating && <DeactivateModal staff={deactivating} openCount={(data ?? []).filter((t) => t.owner_id === deactivating.id).length} onClose={() => setDeactivating(null)} onConfirm={(to) => setActive(deactivating, false, to)} />}
+    {deleting && <DeleteModal staff={deleting} openCount={(data ?? []).filter((t) => t.owner_id === deleting.id).length} onClose={() => setDeleting(null)} onConfirm={(to) => remove(deleting, to)} />}
   </>;
+}
+
+function DeleteModal({ staff, openCount, onClose, onConfirm }: { staff: Staff; openCount: number; onClose: () => void; onConfirm: (to?: string) => void }) {
+  const ws = useWorkspace();
+  const [to, setTo] = useState('');
+  const [typed, setTyped] = useState('');
+  const ok = typed.trim().toLowerCase() === staff.name.trim().toLowerCase();
+  return <Modal title={`Delete ${staff.name}?`} onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" style={{ background: 'var(--red)', borderColor: 'var(--red)' }} disabled={!ok} onClick={() => onConfirm(to || undefined)}>Delete for good</button></>}>
+    <p style={{ marginTop: 0 }}>This can’t be undone. Their account is removed, and their name disappears from past tasks, history and reports. To keep their history, use <b>Deactivate</b> instead.</p>
+    {openCount > 0 && <div className="field"><label>{openCount} open task{openCount === 1 ? '' : 's'}: reassign to</label><select value={to} onChange={(e) => setTo(e.target.value)}><option value="">Leave unassigned</option>{ws.staff.filter((s) => s.is_active && s.id !== staff.id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>}
+    <div className="field" style={{ marginTop: 10 }}><label>Type <b>{staff.name}</b> to confirm</label><input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" /></div>
+  </Modal>;
 }
 
 function DeactivateModal({ staff, openCount, onClose, onConfirm }: { staff: Staff; openCount: number; onClose: () => void; onConfirm: (to?: string) => void }) {

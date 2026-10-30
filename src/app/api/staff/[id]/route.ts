@@ -1,7 +1,7 @@
 import { body, context, found, handler, HttpError, json, requireAdmin, type Params } from '@/lib/api';
 import { hashPassword } from '@/lib/auth';
 import { db, row, setClause } from '@/lib/db';
-import { staffPatch } from '@/lib/schemas';
+import { staffPatch, uuid } from '@/lib/schemas';
 import { STAFF_SELECT } from '@/lib/types';
 
 /**
@@ -25,4 +25,31 @@ export const PATCH = handler(async (req: Request, { params }: Params) => {
     if (!set.sql) return found(await row(`select ${STAFF_SELECT} from staff where id = $1`, [id], tx), 'Teammate');
     return found(await row(`update staff set ${set.sql} where id = $1 returning ${STAFF_SELECT}`, [id, ...set.params], tx), 'Teammate');
   }));
+});
+
+/**
+ * Admin permanently removes a teammate. Open tasks go to `?reassign_to=` (or become
+ * unassigned); everything else that pointed at them keeps its history but loses the name.
+ */
+export const DELETE = handler(async (req: Request, { params }: Params) => {
+  const { id } = await params;
+  const c = await context();
+  requireAdmin(c);
+  if (id === c.me.id) throw new HttpError(400, 'You can’t delete yourself');
+  const to = new URL(req.url).searchParams.get('reassign_to');
+  if (to && (!uuid.safeParse(to).success || to === id)) throw new HttpError(400, 'reassign_to: invalid teammate');
+
+  await db().transaction(c.me.id, async (tx) => {
+    found(await row(`select id from staff where id = $1`, [id], tx), 'Teammate');
+    if (to) await tx.query(`update tasks set owner_id = $2 where owner_id = $1 and stage <> 'posted'`, [id, to]);
+    await tx.query(`update tasks set owner_id = null where owner_id = $1`, [id]);
+    await tx.query(`update plan_items set owner_id = null where owner_id = $1`, [id]);
+    await tx.query(`update clients set account_manager_id = null where account_manager_id = $1`, [id]);
+    await tx.query(`update task_events set actor_id = null where actor_id = $1`, [id]);
+    await tx.query(`update post_matches set matched_by = null where matched_by = $1`, [id]);
+    await tx.query(`update ig_posts set decided_by = null where decided_by = $1`, [id]);
+    await tx.query(`delete from notifications where staff_id = $1`, [id]);
+    await tx.query(`delete from staff where id = $1`, [id]);
+  });
+  return json({ ok: true });
 });
