@@ -266,8 +266,15 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 
 /* plans */
 .plan-layout{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;align-items:start}
-.pitem{padding:16px 18px;border-top:1px solid var(--line)}
-.pgrid{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:10px;align-items:end}
+.pitems-list{display:flex;flex-direction:column;gap:12px;padding:0 18px 14px}
+.pitem{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s,box-shadow .15s,background-color .15s}
+.pitem:hover{background:#ffffff;border-color:#cbd5e1;box-shadow:0 3px 10px rgba(15,23,42,0.04)}
+.pgrid{display:grid;grid-template-columns:1.15fr 1fr 1.35fr auto;gap:10px;align-items:end}
+.pgrid .icon-btn.del-btn{height:35px;width:35px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#94a3b8;border:1px solid transparent;transition:all .15s}
+.pgrid .icon-btn.del-btn:hover{color:var(--red);background:#fee2e2;border-color:#fca5a5}
+.pitem-sub{padding-top:10px;border-top:1px dashed #e2e8f0;display:flex;flex-direction:column;gap:4px}
+.pitem-sub .days{margin-top:2px}
+.pitem-foot{padding:0 18px 18px}
 .pgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .field label{display:block;font-size:11px;color:#5e6862;margin-bottom:5px;font-weight:500}
 .field select,.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:#fff;font-size:12.5px;outline:none}
