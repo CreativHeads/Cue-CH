@@ -2,6 +2,7 @@ import { body, context, found, handler, json, type Params } from '@/lib/api';
 import { db, row, rows } from '@/lib/db';
 import { taskPatch } from '@/lib/schemas';
 import { deleteTask, updateTask } from '@/lib/tasks';
+import { notifyAssignment } from '@/lib/telegram';
 import type { Task } from '@/lib/types';
 
 export const GET = handler(async (_req: Request, { params }: Params) => {
@@ -16,7 +17,13 @@ export const GET = handler(async (_req: Request, { params }: Params) => {
 export const PATCH = handler(async (req: Request, { params }: Params) => {
   const { id } = await params;
   const c = await context();
-  return json(await updateTask(db(), { id: c.me.id, isLead: c.isLead }, id, await body(req, taskPatch)));
+  const old = await row<{ owner_id: string | null }>(`select owner_id from tasks where id = $1`, [id]);
+  const input = await body(req, taskPatch);
+  const updated = await updateTask(db(), { id: c.me.id, isLead: c.isLead }, id, input);
+  if (input.owner_id && input.owner_id !== old?.owner_id && input.owner_id !== c.me.id) {
+    notifyAssignment(db(), id, c.me.id, input.owner_id).catch(() => null);
+  }
+  return json(updated);
 });
 
 export const DELETE = handler(async (_req: Request, { params }: Params) => {

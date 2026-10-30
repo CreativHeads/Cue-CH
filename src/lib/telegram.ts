@@ -120,3 +120,27 @@ export async function notifyChat(on: Db, chatId: string, n: Omit<Notice, 'staffI
 export async function leadsAndAdmins(on: Db) {
   return rows<{ id: string; name: string; role: string }>(`select id, name, role from staff where is_active and role in ('admin', 'lead')`, [], on);
 }
+
+export async function notifyAssignment(on: Db, taskId: string, assignerId: string, assigneeId: string) {
+  if (!telegramConfigured()) return;
+  const staff = await row<{ name: string; telegram_chat_id: string | null }>(`select name, telegram_chat_id from staff where id = $1 and is_active`, [assigneeId], on);
+  if (!staff?.telegram_chat_id) return;
+  const assigner = await row<{ name: string }>(`select name from staff where id = $1`, [assignerId], on);
+  const task = await row<{ title: string; client: string; due_at: string }>(
+    `select t.title, c.name as client, t.due_at from tasks t join clients c on c.id = t.client_id where t.id = $1`, [taskId], on);
+  if (!task) return;
+  const appUrl = process.env.APP_URL ? `${process.env.APP_URL.replace(/\/$/, '')}/tasks?task=${taskId}` : null;
+  const text = `📌 <b>New task assigned by ${esc(assigner?.name ?? 'Lead')}:</b>\n` +
+    `• <b>Client:</b> ${esc(task.client)}\n` +
+    `• <b>Deliverable:</b> “${esc(task.title)}”\n` +
+    `• <b>Due:</b> ${istTime(task.due_at)} IST`;
+  const buttons: Button[][] = [[
+    { text: '▶️ Start Designing', data: `stg:${taskId}:designing` },
+    ...(appUrl ? [{ text: 'Open task', url: appUrl }] : [])
+  ]];
+  try {
+    await sendMessage(staff.telegram_chat_id, text, buttons);
+  } catch (e) {
+    console.error('Failed to notify assignment:', e);
+  }
+}

@@ -4,6 +4,7 @@ import { db, rows } from '@/lib/db';
 import { runGeneration } from '@/lib/plans';
 import { date, taskCreate, uuid } from '@/lib/schemas';
 import { createTask } from '@/lib/tasks';
+import { notifyAssignment } from '@/lib/telegram';
 import { STAGES } from '@/lib/types';
 
 // GET /api/tasks?client=&owner=&stage=&from=&to=&open=true  (from/to are IST dates, inclusive)
@@ -45,5 +46,9 @@ export const GET = handler(async (req: Request) => {
 export const POST = handler(async (req: Request) => {
   const c = await context();
   const input = await body(req, taskCreate);
-  return json(await createTask(db(), { id: c.me.id, isLead: c.isLead }, input), 201);
+  const task = await createTask(db(), { id: c.me.id, isLead: c.isLead }, input);
+  if (task.owner_id && task.owner_id !== c.me.id) {
+    notifyAssignment(db(), task.id, c.me.id, task.owner_id).catch(() => null);
+  }
+  return json(task, 201);
 });

@@ -113,11 +113,28 @@ async function reminders(d: Driver, now: Date, fetcher?: typeof fetch): Promise<
       [now.toISOString(), new Date(now.getTime() + 2 * 36e5).toISOString()], d);
     for (const t of due) {
       if (!t.owner_id) continue;
-      const text = `⏰ <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} and isn’t approved yet.\n“${esc(t.title)}” · ${STAGE_LABEL[t.stage]}`;
-      const buttons = [[{ text: 'Mark approved', data: `stg:${t.id}:approved` }, ...openButton(t.id)]];
+      const owner = (await rows<{ name: string; telegram_chat_id: string | null }>(`select name, telegram_chat_id from staff where id = $1`, [t.owner_id], d))[0];
+      const ownerTag = owner?.telegram_chat_id ? `<a href="tg://user?id=${owner.telegram_chat_id}">@${esc(owner.name)}</a>` : esc(owner?.name ?? 'Designer');
+
+      // Designer nudge: asks why not finished if still in to_brief or designing
+      const designerText = t.stage === 'client_review'
+        ? `⏰ <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} (in 2 hours) and is waiting for client approval.\n“${esc(t.title)}”`
+        : `⏰ <b>Hey ${esc(owner?.name ?? '')}!</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} (in 2 hours) and isn’t finished yet.\n“${esc(t.title)}” · Stage: ${STAGE_LABEL[t.stage]}.\n👉 Please finish the design or let Hadi know the status!`;
+
+      const designerButtons = [[
+        ...(t.stage === 'to_brief' ? [{ text: '▶️ Start Designing', data: `stg:${t.id}:designing` }] : []),
+        ...(t.stage === 'designing' ? [{ text: '✅ Finished (In Review)', data: `stg:${t.id}:client_review` }] : []),
+        { text: 'Mark approved', data: `stg:${t.id}:approved` },
+        ...openButton(t.id)
+      ]];
+
+      // Lead nudge: alerts Hadi
+      const leadText = `⏰ <b>Lead Alert:</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} and isn’t approved yet.\nAssigned to: ${ownerTag}\n“${esc(t.title)}” · Stage: ${STAGE_LABEL[t.stage]}`;
+      const leadButtons = [[{ text: 'Mark approved', data: `stg:${t.id}:approved` }, ...openButton(t.id)]];
+
       const urgent = istTime(t.due_at) < '10:00';
-      results.push(await notify(d, { staffId: t.owner_id, kind: 'nudge_2h', dedupeKey: `nudge_2h:${t.id}`, text, buttons, taskId: t.id, clientId: t.client_id, urgent }, s, { now, fetcher }));
-      if (lead && lead.id !== t.owner_id) results.push(await notify(d, { staffId: lead.id, kind: 'nudge_2h', dedupeKey: `nudge_2h:${t.id}:lead`, text, buttons, taskId: t.id, clientId: t.client_id, urgent }, s, { now, fetcher }));
+      results.push(await notify(d, { staffId: t.owner_id, kind: 'nudge_2h', dedupeKey: `nudge_2h:${t.id}`, text: designerText, buttons: designerButtons, taskId: t.id, clientId: t.client_id, urgent }, s, { now, fetcher }));
+      if (lead && lead.id !== t.owner_id) results.push(await notify(d, { staffId: lead.id, kind: 'nudge_2h', dedupeKey: `nudge_2h:${t.id}:lead`, text: leadText, buttons: leadButtons, taskId: t.id, clientId: t.client_id, urgent }, s, { now, fetcher }));
     }
   }
   if (s.overdue_enabled) {
@@ -126,10 +143,18 @@ async function reminders(d: Driver, now: Date, fetcher?: typeof fetch): Promise<
     const today = istDate(now);
     for (const t of late) {
       const when = istDate(t.due_at) === today ? 'today' : `on ${fmtD(istDate(t.due_at))}`;
-      const text = `🔴 Overdue: <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} was due ${when} at ${fmtT(istTime(t.due_at))}. Stage: ${STAGE_LABEL[t.stage]}.\n“${esc(t.title)}”`;
+      const owner = t.owner_id ? (await rows<{ name: string; telegram_chat_id: string | null }>(`select name, telegram_chat_id from staff where id = $1`, [t.owner_id], d))[0] : null;
+      const ownerTag = owner?.telegram_chat_id ? `<a href="tg://user?id=${owner.telegram_chat_id}">@${esc(owner.name)}</a>` : esc(owner?.name ?? 'Unassigned');
+
       const nx = nextStage(t.stage);
       const buttons = [[...(nx && nx !== 'posted' ? [{ text: STAGE_LABEL[nx], data: `stg:${t.id}:${nx}` }] : []), ...openButton(t.id)]];
+
+      const designerText = `🔴 <b>Overdue:</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} was due ${when} at ${fmtT(istTime(t.due_at))} and is <b>NOT posted yet</b>! Stage: ${STAGE_LABEL[t.stage]}.\n“${esc(t.title)}”\n👉 Why is this delayed? Please finish it or update Hadi with the reason!`;
+      const leadText = `⚠️ <b>Warning to Lead:</b> ${when === 'today' ? "Today’s" : "Past"} deliverable for <b>${esc(t.client)}</b> was due ${when} at ${fmtT(istTime(t.due_at))} and is <b>NOT posted</b> yet!\n• Assigned to: ${ownerTag}\n• Current stage: ${STAGE_LABEL[t.stage]}\n“${esc(t.title)}”\n👉 Please check with ${ownerTag} for the delay reason.`;
+
       for (const sid of new Set([t.owner_id, lead?.id].filter(Boolean) as string[])) {
+        const isLeadUser = lead && sid === lead.id;
+        const text = isLeadUser ? leadText : designerText;
         results.push(await notify(d, { staffId: sid, kind: 'overdue', dedupeKey: `overdue:${t.id}:${today}:${sid}`, text, buttons, taskId: t.id, clientId: t.client_id }, s, { now, fetcher }));
       }
     }

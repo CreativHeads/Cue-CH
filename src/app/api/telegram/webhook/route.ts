@@ -3,7 +3,7 @@ import { db, row } from '@/lib/db';
 import { HttpError } from '@/lib/errors';
 import { secretMatches } from '@/lib/secret';
 import { updateTask } from '@/lib/tasks';
-import { callTelegram, sendMessage, webhookEnabled } from '@/lib/telegram';
+import { callTelegram, esc, leadsAndAdmins, sendMessage, webhookEnabled } from '@/lib/telegram';
 import { STAGES, STAGE_LABEL, type Stage } from '@/lib/types';
 
 const ok = () => NextResponse.json({ ok: true });
@@ -47,12 +47,28 @@ export async function POST(req: Request) {
     if (cb?.data?.startsWith('stg:')) {
       const [, taskId, stage] = cb.data.split(':');
       const answer = (t: string) => callTelegram('answerCallbackQuery', { callback_query_id: cb.id, text: t });
-      const who = await row<{ id: string; role: string }>(`select id, role from staff where telegram_chat_id = $1 and is_active`, [cb.from.id]);
+      const who = await row<{ id: string; role: string; name: string }>(`select id, role, name from staff where telegram_chat_id = $1 and is_active`, [cb.from.id]);
       if (!who) { await answer('This Telegram account isn’t linked to the tracker.'); return ok(); }
       if (!(STAGES as readonly string[]).includes(stage) || stage === 'posted') { await answer('Unknown action.'); return ok(); }
       try {
         await updateTask(db(), { id: who.id, isLead: who.role === 'admin' || who.role === 'lead' }, taskId, { stage: stage as Stage });
         await answer(`Moved to ${STAGE_LABEL[stage as Stage]}`);
+        if (stage === 'client_review' && who.role !== 'lead' && who.role !== 'admin') {
+          const lead = (await leadsAndAdmins(db())).find((l) => l.role === 'lead');
+          if (lead) {
+            const leadStaff = await row<{ telegram_chat_id: string | null }>(`select telegram_chat_id from staff where id = $1`, [lead.id], db());
+            const task = await row<{ title: string; client: string }>(`select t.title, c.name as client from tasks t join clients c on c.id = t.client_id where t.id = $1`, [taskId], db());
+            if (leadStaff?.telegram_chat_id && task) {
+              const url = process.env.APP_URL ? `${process.env.APP_URL.replace(/\/$/, '')}/tasks?task=${taskId}` : null;
+              await sendMessage(leadStaff.telegram_chat_id,
+                `🎨 <b>Designer Finished!</b>\n` +
+                `<b>${esc(who.name)}</b> finished design for <b>${esc(task.client)}</b> — “${esc(task.title)}”!\n` +
+                `Ready for your review and client approval.`,
+                [[{ text: 'Mark Approved', data: `stg:${taskId}:approved` }, ...(url ? [{ text: 'Open Task', url }] : [])]]
+              ).catch(() => null);
+            }
+          }
+        }
       } catch (e) {
         await answer(e instanceof HttpError && e.status === 403 ? 'Only the owner or the lead can change this task.' : 'Couldn’t update the task.');
       }
