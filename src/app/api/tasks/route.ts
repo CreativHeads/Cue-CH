@@ -47,7 +47,7 @@ export const POST = handler(async (req: Request) => {
   const c = await context();
   const input = await body(req, taskCreate);
   const task = await createTask(db(), { id: c.me.id, isLead: c.isLead }, input);
-  if (task.owner_id && task.owner_id !== c.me.id) {
+  if (task && task.owner_id && task.owner_id !== c.me.id) {
     notifyAssignment(db(), task.id, c.me.id, task.owner_id).catch(() => null);
   }
   return json(task, 201);
