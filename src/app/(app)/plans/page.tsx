@@ -160,7 +160,7 @@ function Plans() {
             const f = i.frequency;
             return <div key={i.id} className="pitem">
               <div className="pgrid">
-                <div className="field"><label>Content type</label><select value={i.content_type} disabled={locked} onChange={(e) => update(i.id, { content_type: e.target.value as ContentType })}>{CONTENT_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}</select></div>
+                <div className="field"><label>Content type</label><select value={i.content_type === 'special_days_poster' ? 'poster' : i.content_type} disabled={locked} onChange={(e) => update(i.id, { content_type: e.target.value as ContentType })}>{CONTENT_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}</select></div>
                 <div className="field"><label>{f.mode === 'per_week' ? 'Per week' : 'Per month'}</label>
                   {f.mode === 'dates' ? <input value={f.dates.length} disabled />
                     : f.mode === 'per_week' ? <input type="number" min={1} max={7} value={f.count} disabled={locked} onChange={(e) => {
@@ -188,6 +188,11 @@ function Plans() {
                 }}>{RHYTHM.map(([m, l]) => <option key={m} value={m}>{l}</option>)}</select></div>
                 {!locked ? <button className="icon-btn" title="Remove line" onClick={() => { if (confirm('Remove this line? Its untouched future tasks are removed too.')) act(() => api(`/api/plan-items/${i.id}`, { method: 'DELETE' }), 'Line removed'); }}><Icon name="trash" /></button> : <span />}
               </div>
+              {(i.content_type === 'poster' || i.content_type === 'special_days_poster') && <label className={`spl-tick${i.content_type === 'special_days_poster' ? ' on' : ''}`}>
+                <input type="checkbox" checked={i.content_type === 'special_days_poster'} disabled={locked}
+                  onChange={(e) => update(i.id, { content_type: e.target.checked ? 'special_days_poster' : 'poster' })} />
+                Special day poster
+              </label>}
               {(f.mode === 'weekdays' || f.mode === 'per_week') && <div>
                 <div className="days">{WEEK.map((d) => (
                   <button

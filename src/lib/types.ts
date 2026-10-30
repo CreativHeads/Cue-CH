@@ -1,4 +1,7 @@
-export const CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
+/** Types offered in pickers. Special days posters are chosen via a tick under Poster. */
+export const CONTENT_TYPES = ['reel', 'poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
+/** Types offered in filters. */
+export const FILTER_CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'other'] as const;
 export const ALL_CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'story', 'creative_reel', 'carousel', 'presentation_video', 'video', 'other'] as const;
 export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 export const STAGES = ['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'] as const;
@@ -35,9 +38,9 @@ export interface ContentTypeColor {
 export const CONTENT_TYPE_COLORS: Record<ContentType, ContentTypeColor> = {
   reel: { bg: '#f3e8ff', border: '#c084fc', text: '#6b21a8', dot: '#9333ea' },
   poster: { bg: '#fee2e2', border: '#f87171', text: '#991b1b', dot: '#ef4444' },
-  special_days_poster: { bg: '#ccfbf1', border: '#2dd4bf', text: '#0f766e', dot: '#0d9488' },
+  special_days_poster: { bg: '#ffedd5', border: '#fdba74', text: '#9a3412', dot: '#f97316' },
   story: { bg: '#dcfce7', border: '#4ade80', text: '#166534', dot: '#16a34a' },
-  creative_reel: { bg: '#e0e7ff', border: '#818cf8', text: '#312e81', dot: '#4f46e5' },
+  creative_reel: { bg: '#cffafe', border: '#67e8f9', text: '#155e75', dot: '#06b6d4' },
   carousel: { bg: '#dbeafe', border: '#60a5fa', text: '#1e40af', dot: '#2563eb' },
   presentation_video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
   video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },

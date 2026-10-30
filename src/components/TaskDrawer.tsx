@@ -89,7 +89,7 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
               <label>Assigned to</label>
               <select value={form.owner_id} onChange={set('owner_id')} disabled={!lead}><option value="">Unassigned</option>{ws.staff.filter((s) => s.is_active || s.id === t.owner_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
               <label>Content type</label>
-              <select value={form.content_type} onChange={set('content_type')} disabled={!lead}>{CONTENT_TYPES.map((c) => <option key={c} value={c}>{TYPE_LABEL[c]}</option>)}</select>
+              <select value={form.content_type} onChange={set('content_type')} disabled={!lead}>{(CONTENT_TYPES as readonly string[]).includes(t.content_type) ? null : <option value={t.content_type}>{TYPE_LABEL[t.content_type]}</option>}{CONTENT_TYPES.map((c) => <option key={c} value={c}>{TYPE_LABEL[c]}</option>)}</select>
               <label>Due date</label><input type="date" value={form.due_date ?? ''} onChange={set('due_date')} disabled={!lead} />
               <label>Posting time</label><div className="row"><input type="time" value={form.posting_time ?? ''} onChange={set('posting_time')} disabled={!lead} /><small>IST</small></div>
               <label>Priority</label>

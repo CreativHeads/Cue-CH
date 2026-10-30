@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { ClientLogo, ErrorBox, Loading, PageHead, Select, StageBadge, TypeIcon, useData } from '@/components/ui';
 import { addDays, daysInMonth, DOWS, fmtD, fmtT, fmtYM, istTime, MONTHS, mondayOf, relDay, todayIST, ymAdd, ymOf } from '@/lib/dates';
 import { band } from '@/lib/score';
-import { CONTENT_TYPES, TYPE_LABEL, type Client, type ContentType, type Stage, type Task } from '@/lib/types';
+import { FILTER_CONTENT_TYPES, TYPE_LABEL, type Client, type ContentType, type Stage, type Task } from '@/lib/types';
 
 type Dot = 'posted' | 'due' | 'missed' | 'extra';
 interface CellTask { id: string; title: string; type: ContentType; stage: Stage; owner: string | null; dot: Dot }
@@ -94,7 +94,7 @@ export default function Overview() {
         </div>
         <div className="filters">
           <Select icon="user" value={owner} onChange={setOwner} options={[['', 'All owners'], ...ws.staff.filter((s) => s.is_active).map((s) => [s.id, s.name] as [string, string])]} />
-          <Select icon="overview" value={type} onChange={setType} options={[['', 'All content types'], ...CONTENT_TYPES.map((t) => [t, TYPE_LABEL[t]] as [string, string])]} />
+          <Select icon="overview" value={type} onChange={setType} options={[['', 'All content types'], ...FILTER_CONTENT_TYPES.map((t) => [t, TYPE_LABEL[t]] as [string, string])]} />
           <button className={`chip-btn ${problems ? 'on' : ''}`} onClick={() => setProblems(!problems)}><Icon name="flag" size={14} />Only problems</button>
           <div className="month-nav">
             <button onClick={() => nav(-1)}>‹</button>
