@@ -150,7 +150,7 @@ function Plans() {
         <label className="sel no-arrow" style={{ paddingRight: 8 }}><Icon name="calendar" size={14} /><input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} style={{ border: 0, outline: 'none', padding: '6px 0', fontSize: 12.5 }} /></label>
         {statusBadge}
       </div>
-      <span className="muted" style={{ fontSize: 12 }}>{plan ? `${total} deliverables · ` : ''}All times in IST</span>
+      <span className="muted" style={{ fontSize: 12 }}>{plan ? `${total} deliverables` : ''}</span>
     </div>
     {error && <ErrorBox error={error} />}
     {!data ? <Loading /> : !plan ? (
@@ -240,9 +240,6 @@ function Plans() {
                   onChange={(e) => { const v = e.target.value; if (v) { const dates = [...new Set([...f.dates, v])].sort(); update(i.id, { frequency: { ...f, dates }, monthly_count: dates.length }); } }} /><small>Pick dates to add</small></div>
                 <div className="date-chips">{f.dates.map((d) => <span key={d}>{fmtD(d)}{!locked && <button onClick={() => { const dates = f.dates.filter((x) => x !== d); update(i.id, { frequency: { ...f, dates }, monthly_count: dates.length }); }}>×</button>}</span>)}</div>
               </>}
-              <div style={{ marginTop: 10, maxWidth: 220 }}>
-                <div className="field"><label>Posting time · IST</label><input type="time" value={i.posting_time.slice(0, 5)} disabled={locked} onChange={(e) => e.target.value && update(i.id, { posting_time: e.target.value })} /></div>
-              </div>
             </div>;
           })}
           <div className="pitem">
@@ -378,7 +375,7 @@ function Plans() {
               ) : planned.length ? planned.map((i, k) => (
                 <div key={`${i.id}${k}`} className="list-item" style={{ cursor: 'default' }}>
                   <span className={`type-ic ${i.content_type}`}><Icon name={i.content_type} /></span>
-                  <div className="t"><b>{TYPE_LABEL[i.content_type]}</b><small className="muted">{fmtT(i.posting_time)} IST · created when you activate the plan</small></div>
+                  <div className="t"><b>{TYPE_LABEL[i.content_type]}</b><small className="muted">Created when you activate the plan</small></div>
                 </div>
               )) : <div className="empty">Nothing planned for this day.</div>}
             </div>;
