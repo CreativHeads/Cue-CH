@@ -35,9 +35,9 @@ export interface ContentTypeColor {
 export const CONTENT_TYPE_COLORS: Record<ContentType, ContentTypeColor> = {
   reel: { bg: '#f3e8ff', border: '#c084fc', text: '#6b21a8', dot: '#9333ea' },
   poster: { bg: '#fee2e2', border: '#f87171', text: '#991b1b', dot: '#ef4444' },
-  special_days_poster: { bg: '#ffedd5', border: '#fdba74', text: '#9a3412', dot: '#f97316' },
+  special_days_poster: { bg: '#fce7f3', border: '#f472b6', text: '#9d174d', dot: '#db2777' },
   story: { bg: '#dcfce7', border: '#4ade80', text: '#166534', dot: '#16a34a' },
-  creative_reel: { bg: '#cffafe', border: '#67e8f9', text: '#155e75', dot: '#06b6d4' },
+  creative_reel: { bg: '#efe3d6', border: '#c4a07a', text: '#5b3a1e', dot: '#8b5a2b' },
   carousel: { bg: '#dbeafe', border: '#60a5fa', text: '#1e40af', dot: '#2563eb' },
   presentation_video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
   video: { bg: '#fef9c3', border: '#facc15', text: '#854d0e', dot: '#ca8a04' },
