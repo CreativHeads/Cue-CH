@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { api, ClientLogo, ErrorBox, Loading, PageHead, Select, toast, useData } from '@/components/ui';
 import { daysInMonth, dow, DOWS, fmtD, fmtYM, monthDays, MONTHS, todayIST, ymAdd, ymOf } from '@/lib/dates';
 import { itemDates } from '@/lib/generation';
+import { specialDays } from '@/lib/specialDays';
 import { CONTENT_TYPES, CONTENT_TYPE_COLORS, TYPE_LABEL, typeCount, type ContentType, type Frequency, type Plan, type PlanItem, type Weekday } from '@/lib/types';
 
 const WEEK: Weekday[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -49,6 +50,10 @@ function Plans() {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [showSpecial, setShowSpecial] = useState(true);
+  useEffect(() => { try { if (localStorage.getItem('plans.specialDays') === '0') setShowSpecial(false); } catch {} }, []);
+  const toggleSpecial = () => setShowSpecial((v) => { try { localStorage.setItem('plans.specialDays', v ? '0' : '1'); } catch {} return !v; });
+  const special = showSpecial ? specialDays(month) : {};
 
   useEffect(() => {
     if (!plan) {
@@ -252,7 +257,10 @@ function Plans() {
         </div>
         <div>
           <div className="card card-pad">
-            <div className="row" style={{ justifyContent: 'space-between' }}><div><h3>{fmtYM(month)}</h3><div className="sub">Your calendar takes shape as you plan.</div></div><span className="badge nodot grey">{total} tasks</span></div>
+            <div className="row" style={{ justifyContent: 'space-between' }}><div><h3>{fmtYM(month)}</h3><div className="sub">Your calendar takes shape as you plan.</div></div><div className="row" style={{ gap: 6 }}>
+              <button type="button" className={`sp-toggle${showSpecial ? ' on' : ''}`} onClick={toggleSpecial} title="Show Kerala and Indian special days"><i className="sp-dot" />Special days</button>
+              <span className="badge nodot grey">{total} tasks</span>
+            </div></div>
             <div className="cal">
               {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x, k) => <div key={k} className="h">{x}</div>)}
               {Array.from({ length: lead0 }, (_, k) => <div key={`b${k}`} />)}
@@ -289,13 +297,15 @@ function Plans() {
                   ? `${CAL_TYPE_LABEL[l[0]] ?? l[0]} + ${CAL_TYPE_LABEL[l[1]] ?? l[1]}`
                   : `${l.length} tasks`;
 
+                const sp = special[d];
                 return (
                   <div
                     key={d}
-                    title={l.map((t) => TYPE_LABEL[t] ?? t).join(', ')}
+                    title={[...(sp ?? []), ...l.map((t) => TYPE_LABEL[t] ?? t)].join(', ')}
                     className={`d ${l.length ? 'has' : ''} ${d === today ? 'today' : ''}`}
                     style={l.length ? { background: cellBg, border: cellBorder, color: cellColor, fontWeight: 600 } : undefined}
                   >
+                    {sp && <i className="sp-dot" />}
                     <span>{+d.slice(8)}</span>
                     {l.length > 0 && (
                       <>
@@ -322,6 +332,11 @@ function Plans() {
                 </span>
               ))}
             </div>
+            {Object.keys(special).length > 0 && <div className="sp-list">
+              {Object.entries(special).sort(([a], [b]) => a.localeCompare(b)).map(([d, names]) => (
+                <div key={d}><i className="sp-dot" /><b>{fmtD(d)}</b>{names.join(' · ')}</div>
+              ))}
+            </div>}
             {warnings.map((w) => <div key={w} className="warn-box">⚠ {w}</div>)}
           </div>
           <div className="info-bar" style={{ marginTop: 14 }}><Icon name="info" size={15} />{plan.status === 'draft' ? 'Preview the generated dates before activation. The team’s tasks are created when you activate.' : 'Regenerating only updates untouched future tasks. Work already in progress or posted is never moved.'}</div>
