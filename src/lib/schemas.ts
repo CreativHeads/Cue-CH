@@ -69,14 +69,14 @@ export const taskPatch = z.object({
 export const staffCreate = z.object({
   name: z.string().trim().min(1),
   email: z.string().trim().email().transform((s) => s.toLowerCase()),
-  role: z.enum(['admin', 'lead', 'designer', 'editor']),
+  role: z.enum(['admin', 'lead', 'designer', 'editor', 'viewer']),
   title: z.string().nullable().optional(),
   password,
 });
 export const staffPatch = z.object({
   name: z.string().trim().min(1).optional(),
   email: z.string().trim().email().transform((s) => s.toLowerCase()).optional(),
-  role: z.enum(['admin', 'lead', 'designer', 'editor']).optional(),
+  role: z.enum(['admin', 'lead', 'designer', 'editor', 'viewer']).optional(),
   title: z.string().nullable().optional(),
   is_active: z.boolean().optional(),
   password: password.optional(),

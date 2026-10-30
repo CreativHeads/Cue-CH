@@ -55,7 +55,7 @@ function Board() {
 
   return <>
     <PageHead eyebrow="Make room for great work" title="A place for every idea." sub="From the first brief to the final post. Keep it moving."
-      actions={<button className="btn primary" onClick={() => ws.newTask(undefined, client || undefined)}><Icon name="plus" />New task</button>} />
+      actions={!ws.isViewer && <button className="btn primary" onClick={() => ws.newTask(undefined, client || undefined)}><Icon name="plus" />New task</button>} />
     <div className="row wrap" style={{ marginBottom: 10 }}>
       <Select icon="clients" value={client} onChange={setClient} options={[['', 'All clients'], ...ws.clients.map((c) => [c.id, c.name] as [string, string])]} />
       <Select icon="user" value={owner} onChange={setOwner} options={[['', 'All owners'], ...ws.staff.filter((s) => s.is_active).map((s) => [s.id, s.name] as [string, string])]} />
@@ -74,7 +74,7 @@ function Board() {
         return <div key={s} className={`col ${dragOver === s ? 'drag-over' : ''}`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(s); }} onDragLeave={() => setDragOver(null)}
           onDrop={(e) => { e.preventDefault(); setDragOver(null); const t = data.find((x) => x.id === e.dataTransfer.getData('text/plain')); if (t) move(t, s); }}>
-          <div className="col-head"><i style={{ background: DOT[s] }} />{STAGE_LABEL[s]} <span className="cnt">{list.length}</span>{s !== 'posted' && <button onClick={() => ws.newTask(s, client || undefined)} title="Add task">+</button>}</div>
+          <div className="col-head"><i style={{ background: DOT[s] }} />{STAGE_LABEL[s]} <span className="cnt">{list.length}</span>{s !== 'posted' && !ws.isViewer && <button onClick={() => ws.newTask(s, client || undefined)} title="Add task">+</button>}</div>
           {list.slice(0, 80).map((t) => {
             const overdue = t.stage !== 'posted' && new Date(t.due_at) < now;
             const editable = ws.canEdit(t);

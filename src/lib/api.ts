@@ -11,18 +11,25 @@ export const json = (data: unknown, status = 200) => NextResponse.json(data, { s
 export const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
 
 
-export interface Ctx { me: Staff; isLead: boolean; isAdmin: boolean }
+export interface Ctx { me: Staff; isLead: boolean; isAdmin: boolean; isViewer: boolean }
 
 /** Resolve the signed-in staff member from the session cookie. */
 export async function context(): Promise<Ctx> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const me = await staffForToken(token);
   if (!me) throw new HttpError(401, 'Not signed in');
-  return { me, isLead: me.role === 'admin' || me.role === 'lead', isAdmin: me.role === 'admin' };
+  const isViewer = me.role === 'viewer';
+  return {
+    me,
+    isLead: !isViewer && (me.role === 'admin' || me.role === 'lead'),
+    isAdmin: !isViewer && me.role === 'admin',
+    isViewer,
+  };
 }
 
 export function requireLead(c: Ctx) { if (!c.isLead) throw new HttpError(403, 'Only the lead or admin can do this'); }
 export function requireAdmin(c: Ctx) { if (!c.isAdmin) throw new HttpError(403, 'Only the admin can do this'); }
+export function requireNotViewer(c: Ctx) { if (c.isViewer) throw new HttpError(403, 'Read-only access: viewers cannot make changes'); }
 export function found<T>(v: T | null | undefined, what: string): T {
   if (v == null) throw new HttpError(404, `${what} not found`);
   return v;

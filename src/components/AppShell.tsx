@@ -9,7 +9,7 @@ import { api, Avatar, Loading, Modal, toast, Toasts } from './ui';
 import { ROLE_LABEL, type Client, type Stage, type Staff, type Task } from '@/lib/types';
 
 interface Workspace {
-  me: Staff; staff: Staff[]; clients: Client[]; isLead: boolean; isAdmin: boolean;
+  me: Staff; staff: Staff[]; clients: Client[]; isLead: boolean; isAdmin: boolean; isViewer: boolean;
   staffById: (id: string | null) => Staff | undefined;
   clientById: (id: string) => Client | undefined;
   canEdit: (t: Pick<Task, 'owner_id'>) => boolean;
@@ -64,14 +64,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const ws = useMemo<Workspace | null>(() => {
     if (!boot) return null;
-    const isLead = boot.me.role === 'admin' || boot.me.role === 'lead';
+    const isViewer = boot.me.role === 'viewer';
+    const isLead = !isViewer && (boot.me.role === 'admin' || boot.me.role === 'lead');
+    const isAdmin = !isViewer && boot.me.role === 'admin';
     return {
-      ...boot, isLead, isAdmin: boot.me.role === 'admin',
+      ...boot, isLead, isAdmin, isViewer,
       staffById: (id) => boot.staff.find((s) => s.id === id),
       clientById: (id) => boot.clients.find((c) => c.id === id),
-      canEdit: (t) => isLead || t.owner_id === boot.me.id,
+      canEdit: (t) => !isViewer && (isLead || t.owner_id === boot.me.id),
       openTask: setTaskId,
-      newTask: (stage, clientId) => setNewTask({ stage, clientId }),
+      newTask: (stage, clientId) => { if (!isViewer) setNewTask({ stage, clientId }); },
       version, bump: () => setVersion((v) => v + 1), reloadWorkspace: load,
     };
   }, [boot, version, load]);
@@ -84,8 +86,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
   if (!ws) return <Loading />;
 
+  const navItems = NAV.filter((n) => {
+    if (!n) return true;
+    if (n.href === '/settings' && ws.isViewer) return false;
+    return true;
+  });
+
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
-  const current = NAV.find((n) => n && active(n.href));
+  const current = navItems.find((n) => n && active(n.href));
 
   return (
     <Ctx.Provider value={ws}>
@@ -94,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link className="brand" href="/" aria-label="Cue home"><Logo /></Link>
           <div className="nav-label">Workspace</div>
           <nav className="nav">
-            {NAV.map((n, i) => n ? (
+            {navItems.map((n, i) => n ? (
               <Link key={n.href} href={n.href} className={active(n.href) ? 'on' : ''}><Icon name={n.icon} />{n.label}
                 {n.href === '/team' && <span className="cnt">{ws.staff.filter((s) => s.is_active).length}</span>}
               </Link>
@@ -103,7 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="side-promo"><b><Icon name="spark" /> A smoother creative day</b><p>Your plans, people and progress.<br />All in one happy place.</p></div>
           <div className="side-user">
             <Avatar staff={ws.me} />
-            <div style={{ flex: 1 }}><b>{ws.me.name}</b><small>{ws.me.role === 'admin' ? 'Workspace admin' : ROLE_LABEL[ws.me.role]}</small></div>
+            <div style={{ flex: 1 }}><b>{ws.me.name}</b><small>{ws.me.title ? `${ws.me.title} · ` : ''}{ws.me.role === 'admin' ? 'Workspace admin' : ROLE_LABEL[ws.me.role]}</small></div>
             <button className="icon-btn" title="Change password" onClick={() => setPwOpen(true)}><Icon name="settings" /></button>
             <form action="/api/auth/signout" method="post"><button className="icon-btn" title="Sign out"><Icon name="logout" /></button></form>
           </div>

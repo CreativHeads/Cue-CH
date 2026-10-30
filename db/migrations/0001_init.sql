@@ -5,7 +5,7 @@
 -- ---------- enums ----------
 create type content_type as enum ('story','carousel','reel','poster','video','other','creative_reel','presentation_video','special_days_poster');
 create type task_stage   as enum ('to_brief','designing','client_review','approved','scheduled','posted');
-create type staff_role   as enum ('admin','lead','designer','editor');
+create type staff_role   as enum ('admin','lead','designer','editor','viewer');
 create type match_method as enum ('auto','suggested','manual');
 create type post_status  as enum ('matched','extra','pending_review','ignored');
 create type plan_status  as enum ('draft','active','closed');

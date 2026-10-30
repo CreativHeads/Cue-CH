@@ -1,4 +1,4 @@
-import { body, context, handler, HttpError, json } from '@/lib/api';
+import { body, context, handler, HttpError, json, requireNotViewer } from '@/lib/api';
 import { addDays, toDueAt } from '@/lib/dates';
 import { db, rows } from '@/lib/db';
 import { runGeneration } from '@/lib/plans';
@@ -45,8 +45,9 @@ export const GET = handler(async (req: Request) => {
 
 export const POST = handler(async (req: Request) => {
   const c = await context();
+  requireNotViewer(c);
   const input = await body(req, taskCreate);
-  const task = await createTask(db(), { id: c.me.id, isLead: c.isLead }, input);
+  const task = await createTask(db(), { id: c.me.id, isLead: c.isLead, isViewer: c.isViewer }, input);
   if (task && task.owner_id && task.owner_id !== c.me.id) {
     notifyAssignment(db(), task.id, c.me.id, task.owner_id).catch(() => null);
   }

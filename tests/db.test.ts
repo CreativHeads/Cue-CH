@@ -154,6 +154,17 @@ describe('task permissions and history', () => {
     await addNote(db, basil(), task.id, 'Client wants a warmer palette');
     expect(await row(`select to_value from task_events where task_id = $1 and type = 'note'`, [task.id])).toEqual({ to_value: 'Client wants a warmer palette' });
   });
+
+  it('viewer cannot create, update, note, or delete tasks', async () => {
+    const viewerActor: Actor = { id: ids.Souban, isLead: false, isViewer: true };
+    await expect(createTask(db, viewerActor, {
+      client_id: ids.malabar, content_type: 'poster', owner_id: ids.Shelby, stage: 'to_brief',
+      due_date: '2026-11-05', posting_time: '18:00', title: 'Viewer poster', priority: 'normal',
+    })).rejects.toThrow('Read-only access');
+
+    await expect(updateTask(db, viewerActor, task.id, { title: 'Hacked title' })).rejects.toThrow('Read-only access');
+    await expect(addNote(db, viewerActor, task.id, 'Viewer note')).rejects.toThrow('Read-only access');
+  });
 });
 
 describe('passwords and sessions', () => {

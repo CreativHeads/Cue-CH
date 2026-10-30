@@ -10,9 +10,10 @@ import { TYPE_LABEL, type Task } from '@/lib/types';
 function MyTasks() {
   const ws = useWorkspace();
   const params = useSearchParams();
-  const [who, setWho] = useState(params.get('owner') ?? (ws.isLead ? '' : ws.me.id));
+  const canFilter = ws.isLead || ws.isViewer;
+  const [who, setWho] = useState(params.get('owner') ?? (canFilter ? '' : ws.me.id));
   const [all, setAll] = useState(false);
-  const owner = ws.isLead ? who : ws.me.id;
+  const owner = canFilter ? who : ws.me.id;
   const { data, error } = useData<Task[]>(`/api/tasks?${owner ? `owner=${owner}&` : ''}${all ? '' : 'open=true'}`, [ws.version]);
 
   const today = todayIST();
@@ -32,11 +33,11 @@ function MyTasks() {
 
   return <>
     <PageHead eyebrow="A clearer day starts here" title="Your next good work." sub="The right priorities, in the right order."
-      actions={<button className="btn primary" onClick={() => ws.newTask()}><Icon name="plus" />New task</button>} />
+      actions={!ws.isViewer && <button className="btn primary" onClick={() => ws.newTask()}><Icon name="plus" />New task</button>} />
     <div className="row wrap" style={{ justifyContent: 'space-between' }}>
       <div className="row">
-        <Select icon="user" value={owner} onChange={setWho} disabled={!ws.isLead}
-          options={ws.isLead ? [['', 'Team tasks · Admin view'], ...ws.staff.filter((s) => s.is_active).map((s) => [s.id, s.id === ws.me.id ? `${s.name} (me)` : s.name] as [string, string])] : [[ws.me.id, `${ws.me.name} (me)`]]} />
+        <Select icon="user" value={owner} onChange={setWho} disabled={!canFilter}
+          options={canFilter ? [['', ws.isViewer ? 'Team tasks · Owner view' : 'Team tasks · Admin view'], ...ws.staff.filter((s) => s.is_active).map((s) => [s.id, s.id === ws.me.id ? `${s.name} (me)` : s.name] as [string, string])] : [[ws.me.id, `${ws.me.name} (me)`]]} />
         <span className="muted" style={{ fontSize: 12.5 }}>{open} open tasks</span>
       </div>
       <div className="seg"><button className={!all ? 'on' : ''} onClick={() => setAll(false)}>Open tasks</button><button className={all ? 'on' : ''} onClick={() => setAll(true)}>All tasks</button></div>

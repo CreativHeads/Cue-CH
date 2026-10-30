@@ -3,7 +3,7 @@ export const ALL_CONTENT_TYPES = ['reel', 'poster', 'special_days_poster', 'stor
 export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 export const STAGES = ['to_brief', 'designing', 'client_review', 'approved', 'scheduled', 'posted'] as const;
 export type Stage = (typeof STAGES)[number];
-export type Role = 'admin' | 'lead' | 'designer' | 'editor';
+export type Role = 'admin' | 'lead' | 'designer' | 'editor' | 'viewer';
 export type PlanStatus = 'draft' | 'active' | 'closed';
 export type Weekday = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
 
@@ -54,7 +54,13 @@ export const STAGE_LABEL: Record<Stage, string> = {
 export const typeCount = (n: number, t: ContentType) =>
   `${n} ${t === 'story' ? (n === 1 ? 'story' : 'stories') : t === 'special_days_poster' ? (n === 1 ? 'special days poster' : 'special days posters') : (TYPE_LABEL[t] ?? t).toLowerCase() + (n === 1 ? '' : 's')}`;
 
-export const ROLE_LABEL: Record<Role, string> = { admin: 'Admin', lead: 'Creative lead', designer: 'Designer', editor: 'Editor' };
+export const ROLE_LABEL: Record<Role, string> = {
+  admin: 'Admin',
+  lead: 'Creative lead',
+  designer: 'Designer',
+  editor: 'Editor',
+  viewer: 'Owner (View only)',
+};
 
 export interface Staff {
   id: string; name: string; email: string; role: Role; title: string | null;

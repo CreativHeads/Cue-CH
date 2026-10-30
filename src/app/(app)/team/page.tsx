@@ -56,14 +56,19 @@ export default function Team() {
         })}
       </div>
       <div><div className="card"><div className="card-pad"><h3>Clear roles. Easier collaboration.</h3><div className="sub">Checked by the server on every request, not just hidden on screen.</div></div>
-        {[['Admin', 'Everything: clients, connections, staff, settings, plans and reports.'], ['Creative lead', 'Plans, task assignment, approvals, review queue and reports.'], ['Designer & editor', 'Own tasks: move stages, add notes and links, mark posted manually.']].map(([a, b]) => <div key={a} className="attn"><div><b>{a}</b><p>{b}</p></div></div>)}
+        {[
+          ['Admin', 'Everything: clients, connections, staff, settings, plans and reports.'],
+          ['Creative lead', 'Plans, task assignment, approvals, review queue and reports.'],
+          ['Designer & editor', 'Own tasks: move stages, add notes and links, mark posted manually.'],
+          ['Owner (View only)', 'Agency owner / observer: can view all plans, content boards, review queue and reports in read-only mode without edit access.']
+        ].map(([a, b]) => <div key={a} className="attn"><div><b>{a}</b><p>{b}</p></div></div>)}
       </div></div>
     </div>
     {adding && <Modal title="Add a teammate" onClose={() => setAdding(false)} footer={<><button className="btn" onClick={() => setAdding(false)}>Cancel</button><button className="btn primary" onClick={addStaff}>Add teammate</button></>}>
       <form id="stForm" className="fgrid" onSubmit={(e) => { e.preventDefault(); addStaff(); }}>
         <div className="field"><label>Name</label><input name="name" required /></div>
         <div className="field"><label>Sign-in email</label><input name="email" type="email" required /></div>
-        <div className="field"><label>Role</label><select name="role"><option value="designer">Designer</option><option value="editor">Editor</option><option value="lead">Lead</option><option value="admin">Admin</option></select></div>
+        <div className="field"><label>Role</label><select name="role"><option value="designer">Designer</option><option value="editor">Editor</option><option value="lead">Lead</option><option value="admin">Admin</option><option value="viewer">Owner (View only)</option></select></div>
         <div className="field"><label>Title</label><input name="title" placeholder="e.g. Visual designer" /></div>
         <div className="field full"><label>Starting password (at least 8 characters; they can change it later)</label><input name="password" type="text" required minLength={8} autoComplete="off" /></div>
         {err && <div className="full err">{err}</div>}
@@ -147,7 +152,7 @@ function EditModal({ staff, onClose }: { staff: Staff; onClose: () => void }) {
     <form id="edForm" className="fgrid" onSubmit={(e) => { e.preventDefault(); save(); }}>
       <div className="field"><label>Name</label><input name="name" required defaultValue={staff.name} /></div>
       <div className="field"><label>Sign-in email</label><input name="email" type="email" required defaultValue={staff.email} /></div>
-      <div className="field"><label>Role</label><select name="role" defaultValue={staff.role} disabled={self}><option value="designer">Designer</option><option value="editor">Editor</option><option value="lead">Lead</option><option value="admin">Admin</option></select></div>
+      <div className="field"><label>Role</label><select name="role" defaultValue={staff.role} disabled={self}><option value="designer">Designer</option><option value="editor">Editor</option><option value="lead">Lead</option><option value="admin">Admin</option><option value="viewer">Owner (View only)</option></select></div>
       <div className="field"><label>Title</label><input name="title" defaultValue={staff.title ?? ''} /></div>
       {err && <div className="full err">{err}</div>}
     </form>

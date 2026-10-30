@@ -75,7 +75,11 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
             {t.stage === 'posted' && <div className="alert ok"><Icon name="checkc" />{t.delivery === 'manual_unverified' ? 'Marked posted by hand. It will be verified when the post shows up on Instagram.' : `Live on Instagram${t.delivery === 'late' ? ' (posted late)' : ''}.`}</div>}
             {overdue && <div className="alert warn"><Icon name="flag" />This task is overdue{lateBy > 0 ? ` by ${lateBy} day${lateBy > 1 ? 's' : ''}` : ''}. Let’s get it back on track.</div>}
             {t.carried_over_from && t.stage !== 'posted' && <div className="alert warn"><Icon name="flag" />Carried over from the week of {fmtD(t.carried_over_from)}.</div>}
-            {!edit && <div className="alert info"><Icon name="info" />Only {name(t.owner_id)} or the creative lead can edit this task.</div>}
+            {ws.isViewer ? (
+              <div className="alert info"><Icon name="info" />You are viewing this deliverable in read-only mode (Agency Owner).</div>
+            ) : !edit ? (
+              <div className="alert info"><Icon name="info" />Only {name(t.owner_id)} or the creative lead can edit this task.</div>
+            ) : null}
 
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <span className="eyebrow">{client?.name} · {TYPE_LABEL[t.content_type]}{t.plan_item_id ? ` · #${t.seq}` : ' · Manual task'}</span>
@@ -119,8 +123,8 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
               {data.events.filter((e) => e.type === 'note').map((e) => (
                 <div className="note" key={e.id}><Avatar staff={ws.staffById(e.actor_id)} sm /><div className="bubble">{e.to_value}<small>{name(e.actor_id)} · {new Date(e.at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</small></div></div>
               ))}
-              <form className="row" onSubmit={(e) => { e.preventDefault(); if (note.trim()) run(() => api(`/api/tasks/${id}/notes`, { method: 'POST', json: { text: note } }).then(() => setNote('')), 'Note added'); }}>
-                <Avatar staff={ws.me} sm /><input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note or link..." /><button className="btn sm">Add note</button></form></div>
+              {!ws.isViewer && <form className="row" onSubmit={(e) => { e.preventDefault(); if (note.trim()) run(() => api(`/api/tasks/${id}/notes`, { method: 'POST', json: { text: note } }).then(() => setNote('')), 'Note added'); }}>
+                <Avatar staff={ws.me} sm /><input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note or link..." /><button className="btn sm">Add note</button></form>}</div>
 
             <div className="dsec"><h4>Activity</h4>{[...data.events].filter((e) => e.type !== 'note').reverse().map((e) => (
               <div className="ev" key={e.id}><i /><div>{describe(e, name)}<small>{e.actor_id ? name(e.actor_id) : 'System'} · {new Date(e.at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</small></div></div>
@@ -128,11 +132,11 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
 
             {lead && <div className="dsec"><button className="btn sm danger" onClick={() => { if (confirm('Delete this task?')) run(() => api(`/api/tasks/${id}`, { method: 'DELETE' }).then(onClose), 'Task deleted'); }}><Icon name="trash" size={14} /> Delete task</button></div>}
           </div>
-          <div className="drawer-foot">
+          {!ws.isViewer && <div className="drawer-foot">
             <button className="btn" disabled={!edit || busy} onClick={save}><Icon name="check" size={15} /> Save changes</button>
             {nextStage && nextStage !== 'posted' && edit && <button className="btn primary" disabled={busy} onClick={() => run(() => api(`/api/tasks/${id}`, { method: 'PATCH', json: { stage: nextStage } }), `Moved to ${STAGE_LABEL[nextStage]}`)}>
               <Icon name="arrow" size={15} /> Move to {STAGE_LABEL[nextStage]}</button>}
-          </div>
+          </div>}
         </>}
       </div>
     </>

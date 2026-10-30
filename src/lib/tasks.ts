@@ -5,7 +5,7 @@ import { row, rows, type Driver } from './db';
 import type { markPosted, taskCreate, taskPatch } from './schemas';
 import type { Task } from './types';
 
-export interface Actor { id: string; isLead: boolean }
+export interface Actor { id: string; isLead: boolean; isViewer?: boolean }
 
 async function load(on: Driver, id: string) {
   const t = await row<Task>(`select * from tasks where id = $1`, [id], on);
@@ -13,11 +13,13 @@ async function load(on: Driver, id: string) {
   return t;
 }
 const mustOwn = (t: Task, a: Actor, msg = 'You can only edit your own tasks') => {
+  if (a.isViewer) throw new HttpError(403, 'Read-only access: viewers cannot edit tasks');
   if (!a.isLead && t.owner_id !== a.id) throw new HttpError(403, msg);
 };
 
 /** Manual task. Designers and editors can only create tasks for themselves. */
 export async function createTask(on: Driver, a: Actor, input: z.infer<typeof taskCreate>) {
+  if (a.isViewer) throw new HttpError(403, 'Read-only access: viewers cannot create tasks');
   const owner = a.isLead ? input.owner_id : a.id;
   return on.transaction(a.id, async (tx) => row<Task>(
     `insert into tasks (client_id, content_type, owner_id, stage, due_at, title, brief, priority)
@@ -80,11 +82,12 @@ export async function markTaskPosted(on: Driver, a: Actor, id: string, input: z.
 }
 
 export async function addNote(on: Driver, a: Actor, id: string, text: string) {
+  if (a.isViewer) throw new HttpError(403, 'Read-only access: viewers cannot add notes');
   await load(on, id);
   return row(`insert into task_events (task_id, actor_id, type, to_value) values ($1, $2, 'note', $3) returning *`, [id, a.id, text], on);
 }
 
 export async function deleteTask(on: Driver, a: Actor, id: string) {
-  if (!a.isLead) throw new HttpError(403, 'Only the lead or admin can delete tasks');
+  if (a.isViewer || !a.isLead) throw new HttpError(403, 'Only the lead or admin can delete tasks');
   await rows(`delete from tasks where id = $1`, [id], on);
 }

@@ -119,7 +119,7 @@ async function reminders(d: Driver, now: Date, fetcher?: typeof fetch): Promise<
       // Designer nudge: asks why not finished if still in to_brief or designing
       const designerText = t.stage === 'client_review'
         ? `⏰ <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} (in 2 hours) and is waiting for client approval.\n“${esc(t.title)}”`
-        : `⏰ <b>Hey ${esc(owner?.name ?? '')}!</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} (in 2 hours) and isn’t finished yet.\n“${esc(t.title)}” · Stage: ${STAGE_LABEL[t.stage]}.\n👉 Please finish the design or let Hadi know the status!`;
+        : `⏰ <b>Hey ${esc(owner?.name ?? '')}!</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} is due at ${fmtT(istTime(t.due_at))} (in 2 hours) and is not finished yet!\n“${esc(t.title)}” · Stage: ${STAGE_LABEL[t.stage]}.\n👉 <b>Why isn’t this finished yet?</b> Please finish the design now or update Hadi with the reason!`;
 
       const designerButtons = [[
         ...(t.stage === 'to_brief' ? [{ text: '▶️ Start Designing', data: `stg:${t.id}:designing` }] : []),
@@ -149,8 +149,8 @@ async function reminders(d: Driver, now: Date, fetcher?: typeof fetch): Promise<
       const nx = nextStage(t.stage);
       const buttons = [[...(nx && nx !== 'posted' ? [{ text: STAGE_LABEL[nx], data: `stg:${t.id}:${nx}` }] : []), ...openButton(t.id)]];
 
-      const designerText = `🔴 <b>Overdue:</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} was due ${when} at ${fmtT(istTime(t.due_at))} and is <b>NOT posted yet</b>! Stage: ${STAGE_LABEL[t.stage]}.\n“${esc(t.title)}”\n👉 Why is this delayed? Please finish it or update Hadi with the reason!`;
-      const leadText = `⚠️ <b>Warning to Lead:</b> ${when === 'today' ? "Today’s" : "Past"} deliverable for <b>${esc(t.client)}</b> was due ${when} at ${fmtT(istTime(t.due_at))} and is <b>NOT posted</b> yet!\n• Assigned to: ${ownerTag}\n• Current stage: ${STAGE_LABEL[t.stage]}\n“${esc(t.title)}”\n👉 Please check with ${ownerTag} for the delay reason.`;
+      const designerText = `🔴 <b>Overdue:</b> <b>${esc(t.client)}</b> ${TYPE_LABEL[t.content_type].toLowerCase()} was due ${when} at ${fmtT(istTime(t.due_at))} and is <b>NOT uploaded/posted yet</b>!\n• Stage: ${STAGE_LABEL[t.stage]}\n• Task: “${esc(t.title)}”\n👉 <b>Why was this poster not uploaded?</b> Please complete it or give the reason to Hadi immediately!`;
+      const leadText = `⚠️ <b>Warning to Lead (Hadi):</b> ${when === 'today' ? "Today’s" : "Past"} deliverable for <b>${esc(t.client)}</b> was due ${when} at ${fmtT(istTime(t.due_at))} and is <b>NOT uploaded/posted yet</b>!\n• Assigned to: ${ownerTag}\n• Current stage: ${STAGE_LABEL[t.stage]}\n• Task: “${esc(t.title)}”\n👉 <b>The poster was not uploaded.</b> Please check with ${ownerTag} for the reason.`;
 
       for (const sid of new Set([t.owner_id, lead?.id].filter(Boolean) as string[])) {
         const isLeadUser = lead && sid === lead.id;
