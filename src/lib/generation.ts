@@ -73,7 +73,7 @@ export function itemDates(item: Pick<PlanItem, 'frequency' | 'monthly_count'>, y
 
 export interface ExistingTask {
   id: string; plan_item_id: string | null; seq: number | null; stage: string; posted_at: string | null;
-  due_at: string; owner_id: string | null; content_type: ContentType; has_notes?: boolean;
+  due_at: string; owner_id: string | null; content_type: ContentType; title?: string; brief?: string | null; has_notes?: boolean;
 }
 export interface TaskInsert {
   client_id: string; plan_item_id: string; seq: number; content_type: ContentType; due_at: string;
@@ -81,7 +81,7 @@ export interface TaskInsert {
 }
 export interface GenerationResult {
   creates: TaskInsert[];
-  updates: { id: string; patch: { due_at: string; owner_id: string | null; content_type: ContentType } }[];
+  updates: { id: string; patch: { due_at: string; owner_id: string | null; content_type: ContentType; title: string; brief: string } }[];
   deletes: string[];
   kept: number;
   warnings: string[];
@@ -110,16 +110,21 @@ export function planGeneration(opts: {
       const seq = i + 1;
       const dueAt = toDueAt(d, time);
       const t = mine.find((x) => x.seq === seq);
+      const label = item.label || `${opts.clientName.split(' ')[0]} ${TYPE_LABEL[item.content_type].toLowerCase()}`;
+      const title = `${label} ${seq}`;
+      const brief = `Create a ${TYPE_LABEL[item.content_type].toLowerCase()} for ${opts.clientName}.`;
       if (!t) {
-        const label = item.label || `${opts.clientName.split(' ')[0]} ${TYPE_LABEL[item.content_type].toLowerCase()}`;
         res.creates.push({
           client_id: opts.clientId, plan_item_id: item.id, seq, content_type: item.content_type, due_at: dueAt,
-          owner_id: item.owner_id, stage: 'to_brief', title: `${label} ${seq}`,
-          brief: `Create a ${TYPE_LABEL[item.content_type].toLowerCase()} for ${opts.clientName}.`,
+          owner_id: item.owner_id, stage: 'to_brief', title, brief,
         });
       } else if (isUntouched(t, opts.today)) {
-        const same = istDate(t.due_at) === d && istTime(t.due_at) === time && t.owner_id === item.owner_id && t.content_type === item.content_type;
-        if (!same) res.updates.push({ id: t.id, patch: { due_at: dueAt, owner_id: item.owner_id, content_type: item.content_type } });
+        const same = istDate(t.due_at) === d &&
+                     istTime(t.due_at) === time &&
+                     t.owner_id === item.owner_id &&
+                     t.content_type === item.content_type &&
+                     (!t.title || t.title === title);
+        if (!same) res.updates.push({ id: t.id, patch: { due_at: dueAt, owner_id: item.owner_id, content_type: item.content_type, title, brief } });
         else res.kept++;
       } else res.kept++;
     });

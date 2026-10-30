@@ -357,6 +357,22 @@ function Plans() {
                     <div className="t"><b>{t.title}</b><small className="muted">{TYPE_LABEL[t.content_type]} · {fmtT(istTime(t.due_at))} IST</small></div>
                     <Avatar staff={ws.staffById(t.owner_id)} sm />
                     <span className={`badge st-${t.stage}`}>{STAGE_LABEL[t.stage]}</span>
+                    {lead && (
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        title="Delete task"
+                        style={{ color: 'var(--red)', opacity: 0.8, marginLeft: 6 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete "${t.title}"?`)) {
+                            act(() => api(`/api/tasks/${t.id}`, { method: 'DELETE' }), 'Task deleted');
+                          }
+                        }}
+                      >
+                        <Icon name="trash" size={14} />
+                      </button>
+                    )}
                   </div>
                 )) : <div className="empty">No tasks on this day.</div>
               ) : planned.length ? planned.map((i, k) => (
