@@ -301,7 +301,7 @@ function Plans() {
                   <div
                     key={d}
                     title={[...(sp ?? []), ...l.map((t) => TYPE_LABEL[t] ?? t)].join(', ')}
-                    className={`d click ${l.length ? 'has' : ''} ${d === today ? 'today' : ''} ${d === sel ? 'sel' : ''}`}
+                    className={`d click ${l.length ? 'has' : ''} ${d === today ? 'today' : ''} ${d === sel ? 'picked' : ''}`}
                     onClick={() => setSel(d === sel ? null : d)}
                     style={l.length ? { background: cellBg, border: cellBorder, color: cellColor, fontWeight: 600 } : undefined}
                   >
