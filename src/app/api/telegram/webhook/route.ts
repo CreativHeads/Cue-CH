@@ -28,7 +28,15 @@ export async function POST(req: Request) {
       const code = text.split(/\s+/)[1];
       const chat = update.message.chat.id;
       const link = code ? await row<{ staff_id: string }>(`delete from telegram_link_codes where code = $1 and expires_at > now() returning staff_id`, [code]) : null;
-      if (!link) { await sendMessage(chat, 'That link has expired. Open Settings in the tracker and press “Connect Telegram” again.'); return ok(); }
+      if (!link) {
+        const who = await row<{ name: string }>(`select name from staff where telegram_chat_id = $1 and is_active`, [chat]);
+        if (who) {
+          await sendMessage(chat, `👋 Hi ${who.name}! You are connected to Cue. Your daily tasks and reminders will arrive here.`);
+          return ok();
+        }
+        await sendMessage(chat, code ? 'That link has expired. Open Settings in the tracker and press “Connect Telegram” again.' : 'Hi! To link your Telegram account, open Settings in Cue and click “Connect Telegram”.');
+        return ok();
+      }
       await db().query(`update staff set telegram_chat_id = null where telegram_chat_id = $1`, [chat]);
       const s = await row<{ name: string }>(`update staff set telegram_chat_id = $2 where id = $1 returning name`, [link.staff_id, chat]);
       await sendMessage(chat, `✅ Connected. Hi ${s?.name ?? ''}, you’ll get your reminders here.`);
