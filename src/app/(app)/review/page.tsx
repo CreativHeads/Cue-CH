@@ -39,6 +39,8 @@ function ReviewCard({ p, lead, act }: { p: Post; lead: boolean; act: (fn: () => 
   const ws = useWorkspace();
   const client = ws.clientById(p.client_id);
   const [choosing, setChoosing] = useState(false);
+  // Instagram picture links expire after a few days; fall back to the caption card when one fails
+  const [picFailed, setPicFailed] = useState(false);
   const day = istDate(p.posted_at);
   const options = useData<Task[]>(choosing ? `/api/tasks?client=${p.client_id}&from=${addDays(day, -10)}&to=${addDays(day, 4)}&open=true` : null);
   const suggested = p.status === 'pending_review' && p.task_id;
@@ -54,8 +56,9 @@ function ReviewCard({ p, lead, act }: { p: Post; lead: boolean; act: (fn: () => 
 
   return (
     <div className="card rcard">
-      <a className="thumb" href={p.permalink ?? '#'} target="_blank" rel="noopener noreferrer" style={{ background: p.thumbnail_url ? `center/cover url(${p.thumbnail_url})` : `linear-gradient(135deg, ${client?.brand_color ?? '#eaf3e0'}, #fff)` }}>
-        {!p.thumbnail_url && <><small>{client?.name}</small>{(p.caption ?? TYPE_LABEL[p.content_type]).split(/\s+/).slice(0, 4).join(' ')}<small>@{client?.ig_username}</small></>}
+      <a className="thumb" href={p.permalink ?? '#'} target="_blank" rel="noopener noreferrer" style={{ background: `linear-gradient(135deg, ${client?.brand_color ?? '#eaf3e0'}, #fff)` }}>
+        <small>{client?.name}</small>{(p.caption ?? TYPE_LABEL[p.content_type]).split(/\s+/).slice(0, 4).join(' ')}<small>@{client?.ig_username}</small>
+        {p.thumbnail_url && !picFailed && <img src={p.thumbnail_url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setPicFailed(true)} />}
       </a>
       <div>
         <div className="row" style={{ gap: 8 }}><span className="badge nodot grey">{TYPE_LABEL[p.content_type]}</span><small>{fmtD(day)} · {fmtT(istTime(p.posted_at))}</small></div>

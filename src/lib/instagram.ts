@@ -6,10 +6,21 @@ import type { ContentType } from './types';
 export const POST_FIELDS = [
   'account_id', 'media_id', 'media_type', 'media_product_type', 'media_permalink', 'media_shortcode', 'timestamp',
   'media_caption', 'media_reach', 'media_like_count', 'media_comments_count', 'media_saved', 'media_views',
-  'media_thumbnail_url', 'media_relationship', 'media_owner_username', 'media_collaborators',
+  'media_thumbnail_url', 'media_url', 'media_relationship', 'media_owner_username', 'media_collaborators',
 ];
 // Story field names as Windsor's Instagram connector names them (checked against the live API); override with WINDSOR_STORY_FIELDS.
-export const STORY_FIELDS = (process.env.WINDSOR_STORY_FIELDS || 'account_id,story_id,story_timestamp,story_permalink,story_reach,media_type').split(',');
+export const STORY_FIELDS = [...new Set([...(process.env.WINDSOR_STORY_FIELDS || 'account_id,story_id,story_timestamp,story_permalink,story_reach,media_type').split(','), 'story_thumbnail_url'])];
+
+/**
+ * The picture to show for a post: video thumbnail, story thumbnail, else the image itself.
+ * media_url is the video file for reels and videos, so it's only used for images and carousels.
+ */
+export function pictureUrl(r: RawRow): string | null {
+  const thumb = str(r.media_thumbnail_url) ?? str(r.story_thumbnail_url);
+  if (thumb) return thumb;
+  const m = String(r.media_type ?? '').toUpperCase(), p = String(r.media_product_type ?? '').toUpperCase();
+  return m === 'VIDEO' || m.startsWith('REEL') || p === 'REELS' ? null : str(r.media_url);
+}
 
 export type RawRow = Record<string, unknown>;
 
@@ -100,7 +111,7 @@ export async function upsertPosts(on: Db, raw: RawRow[], opts: { stories: boolea
          thumbnail_url = coalesce(excluded.thumbnail_url, ig_posts.thumbnail_url),
          last_seen_at = now(), missed_syncs = 0, deleted_at = null, raw = excluded.raw`,
       [client.id, mediaId, str(r.media_type ?? r.story_media_type), str(r.media_product_type) ?? (opts.stories ? 'STORY' : null), type,
-       str(r.media_permalink ?? r.story_permalink), str(r.media_shortcode), str(r.media_thumbnail_url), new Date(ts).toISOString(),
+       str(r.media_permalink ?? r.story_permalink), str(r.media_shortcode), pictureUrl(r), new Date(ts).toISOString(),
        str(r.media_caption), num(r.media_reach ?? r.story_reach), num(r.media_like_count), num(r.media_comments_count), num(r.media_saved),
        num(r.media_views), relationship, owner, Array.isArray(r.media_collaborators) ? r.media_collaborators.join(',') : str(r.media_collaborators),
        status, opts.stories, JSON.stringify(r)], );
