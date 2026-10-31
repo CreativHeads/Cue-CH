@@ -56,7 +56,9 @@ function Plans() {
   const special = showSpecial ? specialDays(month) : {};
   const [sel, setSel] = useState<string | null>(null);
   useEffect(() => setSel(null), [clientId, month]);
-  const { data: monthTasks } = useData<Task[]>(clientId && plan && plan.status !== 'draft' ? `/api/tasks?client=${clientId}&from=${month}-01&to=${month}-${daysInMonth(month)}` : null, [ws.version]);
+  const { data: monthTasks, reload: reloadTasks } = useData<Task[]>(clientId && plan && plan.status !== 'draft' ? `/api/tasks?client=${clientId}&from=${month}-01&to=${month}-${daysInMonth(month)}` : null, [ws.version]);
+  // fetch the day's tasks fresh each time a day is opened, so recent plan changes show
+  useEffect(() => { if (sel) reloadTasks(); }, [sel, reloadTasks]);
 
   useEffect(() => {
     if (!plan) {
@@ -101,7 +103,7 @@ function Plans() {
     return api(`/api/plan-items/${id}`, { method: 'PATCH', json: {
       content_type: next.content_type, monthly_count: next.monthly_count, frequency: next.frequency,
       owner_id: next.owner_id, posting_time: next.posting_time.slice(0, 5), label: next.label,
-    } }).catch((e) => toast(e.message));
+    } }).then(() => reloadTasks()).catch((e) => toast(e.message));
   };
   /** Save edits still waiting on the debounce, so Activate/Regenerate/Copy use what's on screen. */
   const flush = () => Promise.all(Object.keys(pending.current).map(saveItem));
