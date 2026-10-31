@@ -343,6 +343,14 @@ function Plans() {
           {sel && (() => {
             const dayTasks = (monthTasks ?? []).filter((t) => istDate(t.due_at) === sel);
             const planned = previewItems[sel] ?? [];
+            // planned on this day but with no task (e.g. the task was deleted); regenerating brings it back
+            const left = new Map<string, number>();
+            dayTasks.forEach((t) => t.plan_item_id && left.set(t.plan_item_id, (left.get(t.plan_item_id) ?? 0) + 1));
+            const missing = plan.status === 'draft' || !monthTasks ? [] : planned.filter((i) => {
+              const n = left.get(i.id) ?? 0;
+              if (n > 0) { left.set(i.id, n - 1); return false; }
+              return true;
+            });
             const sp = specialDays(month)[sel] ?? [];
             return <div className="card day-panel" style={{ marginTop: 14 }}>
               <div className="card-pad row" style={{ justifyContent: 'space-between' }}>
@@ -366,7 +374,11 @@ function Plans() {
                         style={{ color: 'var(--red)', opacity: 0.8, marginLeft: 6 }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (confirm(`Delete "${t.title}"?`)) {
+                          if (confirm(t.plan_item_id
+                            ? `Delete "${t.title}"?
+
+This date stays in the plan, so the task comes back if the plan is regenerated. To drop the date for good, remove it from the plan line instead.`
+                            : `Delete "${t.title}"?`)) {
                             act(() => api(`/api/tasks/${t.id}`, { method: 'DELETE' }), 'Task deleted');
                           }
                         }}
@@ -375,13 +387,21 @@ function Plans() {
                       </button>
                     )}
                   </div>
-                )) : <div className="empty">No tasks on this day.</div>
+                )) : !missing.length ? <div className="empty">No tasks on this day.</div> : null
               ) : planned.length ? planned.map((i, k) => (
                 <div key={`${i.id}${k}`} className="list-item" style={{ cursor: 'default' }}>
                   <span className={`type-ic ${i.content_type}`}><Icon name={i.content_type} /></span>
                   <div className="t"><b>{TYPE_LABEL[i.content_type]}</b><small className="muted">Created when you activate the plan</small></div>
                 </div>
               )) : <div className="empty">Nothing planned for this day.</div>}
+              {missing.map((i, k) => (
+                <div key={`missing-${i.id}-${k}`} className="list-item missing" style={{ cursor: 'default' }}>
+                  <span className={`type-ic ${i.content_type}`}><Icon name={i.content_type} /></span>
+                  <div className="t"><b>{TYPE_LABEL[i.content_type]} · planned, no task</b><small className="muted">The task for this date was deleted or not created.</small></div>
+                  {lead && plan.status === 'active' && k === 0 && <button className="btn sm" disabled={busy}
+                    onClick={() => act(() => api(`/api/plans/${plan.id}/generate`, { method: 'POST' }), 'Missing task created')}>Create task</button>}
+                </div>
+              ))}
             </div>;
           })()}
           <div className="info-bar" style={{ marginTop: 14 }}><Icon name="info" size={15} />{plan.status === 'draft' ? 'Preview the generated dates before activation. The team’s tasks are created when you activate.' : 'Regenerating only updates untouched future tasks. Work already in progress or posted is never moved.'}</div>

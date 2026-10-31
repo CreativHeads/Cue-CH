@@ -130,7 +130,7 @@ export function TaskDrawer({ id, onClose, onChange }: { id: string; onClose: () 
               <div className="ev" key={e.id}><i /><div>{describe(e, name)}<small>{e.actor_id ? name(e.actor_id) : 'System'} · {new Date(e.at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</small></div></div>
             ))}</div>
 
-            {lead && <div className="dsec"><button className="btn sm danger" onClick={() => { if (confirm('Delete this task?')) run(() => api(`/api/tasks/${id}`, { method: 'DELETE' }).then(onClose), 'Task deleted'); }}><Icon name="trash" size={14} /> Delete task</button></div>}
+            {lead && <div className="dsec"><button className="btn sm danger" onClick={() => { if (confirm(t.plan_item_id ? 'Delete this task?\n\nIts date stays in the monthly plan, so the task comes back if the plan is regenerated. To drop the date for good, remove it from the plan line instead.' : 'Delete this task?')) run(() => api(`/api/tasks/${id}`, { method: 'DELETE' }).then(onClose), 'Task deleted'); }}><Icon name="trash" size={14} /> Delete task</button></div>}
           </div>
           {!ws.isViewer && <div className="drawer-foot">
             <button className="btn" disabled={!edit || busy} onClick={save}><Icon name="check" size={15} /> Save changes</button>
