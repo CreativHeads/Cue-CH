@@ -347,10 +347,11 @@ table.gtable{border-collapse:collapse;width:100%;min-width:1450px}
 .thumb{position:relative;width:110px;height:110px;border-radius:10px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;font-size:15px;font-weight:600;line-height:1.1;color:#46564a;overflow:hidden;background:linear-gradient(135deg,#eaf3e0,#d8e9c6)}
 .thumb small{font-size:6.5px;letter-spacing:.1em;text-transform:uppercase}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;background:#fff}
-.match-box{border:1px solid #d6e2fa;background:#f3f7ff;border-radius:12px;padding:14px}
+.match-box{border:1px solid #d6e2fa;background:#f3f7ff;border-radius:12px;padding:14px;min-width:0}
 .match-box .eyebrow{font-size:9.5px;font-weight:600}
 .match-box b{display:block;font-size:13px;margin:8px 0 2px}
 .match-box .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.match-box .task-pick{width:100%;min-width:0;max-width:100%;flex:1 1 100%;font-size:11.5px;padding:6px 8px;text-overflow:ellipsis}
 
 /* drawer + modal */
 .overlay{position:fixed;inset:0;background:#20302633;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;backdrop-filter:blur(2px)}

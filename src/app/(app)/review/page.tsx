@@ -75,10 +75,12 @@ function ReviewCard({ p, lead, act }: { p: Post; lead: boolean; act: (fn: () => 
           : p.status === 'pending_review' || p.status === 'extra' ? <div className="acts">
             {suggested && <button className="btn primary sm" onClick={() => act(() => api(`/api/posts/${p.id}/match`, { method: 'POST', json: { task_id: p.task_id } }), 'Matched')}><Icon name="check" size={14} />Confirm match</button>}
             {!choosing ? <button className="btn sm" onClick={() => setChoosing(true)}>{suggested ? 'Choose another' : 'Match to task'}</button>
-              : <select className="input" style={{ width: 'auto', fontSize: 11.5, padding: 6 }} defaultValue="" onChange={(e) => e.target.value && act(() => api(`/api/posts/${p.id}/match`, { method: 'POST', json: { task_id: e.target.value } }), 'Matched')}>
+              : <select className="input task-pick" defaultValue="" onChange={(e) => (e.target.value === 'cancel' ? setChoosing(false) : e.target.value && act(() => api(`/api/posts/${p.id}/match`, { method: 'POST', json: { task_id: e.target.value } }), 'Matched'))}>
                 <option value="">{options.data ? 'Pick the task…' : 'Loading…'}</option>
                 {(options.data ?? []).sort((a, b) => Math.abs(diffDays(day, istDate(a.due_at))) - Math.abs(diffDays(day, istDate(b.due_at)))).slice(0, 40).map((t) =>
                   <option key={t.id} value={t.id}>{t.title} · {TYPE_LABEL[t.content_type]} · {fmtD(istDate(t.due_at))}</option>)}
+                {options.data && !options.data.length && <option value="" disabled>No open tasks near this date</option>}
+                <option value="cancel">✕ Cancel</option>
               </select>}
             {p.status !== 'extra' && <button className="btn sm" onClick={() => act(() => api(`/api/posts/${p.id}/status`, { method: 'POST', json: { status: 'extra' } }), 'Kept as extra content')}>Mark extra</button>}
             <button className="btn sm ghost" onClick={() => act(() => api(`/api/posts/${p.id}/status`, { method: 'POST', json: { status: 'ignored' } }), 'Post ignored')}>Ignore</button>
