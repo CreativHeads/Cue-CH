@@ -13,6 +13,8 @@ small{color:var(--muted)}
 
 /* sidebar */
 .sidebar{width:var(--sidebar);flex:none;background:#fbfcff;border-right:1px solid var(--line);padding:22px 12px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:30}
+.sidebar>*{flex-shrink:0}
+.sidebar{scrollbar-width:thin;scrollbar-color:#d5dbe7 transparent}
 .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:var(--brand-dark);padding:0 4px 20px;letter-spacing:-.02em}
 .brand sup{font-size:9px}
 .ws-card{display:flex;gap:10px;align-items:center;border:1px solid var(--line);background:#f1f5fd;border-radius:12px;padding:11px 10px;margin-bottom:22px}
