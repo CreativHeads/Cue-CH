@@ -8,7 +8,7 @@ import { bannedTermsIn } from '@/lib/copyGuard';
 interface Settings {
   digest_enabled: boolean; nudge_enabled: boolean; overdue_enabled: boolean; inactivity_enabled: boolean; quiet_hours_enabled: boolean;
   quiet_start: string; quiet_end: string; digest_time: string; banned_terms: string[]; default_banned: string[]; telegram_bot: string | null;
-  team_group_chat_id: string | null; digest_target: 'personal' | 'group' | 'both';
+  team_group_chat_id: string | null; digest_target: 'personal' | 'group' | 'both'; task_cards_enabled: boolean;
 }
 interface Health {
   jobs: { job: string; label: string; last: { started_at: string; status: string | null; error: string | null; stats: Record<string, unknown> | null } | null; lastSuccess: string | null; stale: boolean }[];
@@ -61,6 +61,7 @@ export default function SettingsPage() {
           <div className="card card-pad"><h3>A thoughtful reminder rhythm</h3><div className="sub">The right nudge, at the right time.</div>
             <div style={{ marginTop: 10 }}>
               {toggle('digest_enabled', 'Morning digest', 'Today, overdue and waiting-on-client, each morning.')}
+              {toggle('task_cards_enabled', 'Task cards', 'Each designer gets their task on its day, with buttons to move it along.')}
               {toggle('nudge_enabled', 'Before-it’s-due nudge', 'Two hours before unapproved content is due.')}
               {toggle('overdue_enabled', 'Overdue alerts', 'To the owner and the creative lead, once a day per task.')}
               {toggle('inactivity_enabled', 'Inactivity red flags', 'When a client goes quiet while the plan expected posts.')}

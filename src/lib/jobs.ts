@@ -4,6 +4,7 @@ import { db, row, rows, type Db, type Driver } from './db';
 import { fetchWindsor, POST_FIELDS, postsWindow, STORY_FIELDS, storiesWindow, upsertPosts } from './instagram';
 import { matchClient, revertDeleted } from './matching';
 import { deliveryScore, scoreParts } from './score';
+import { cardButtons, cardText, type CardTask } from './taskCards';
 import { esc, getSettings, leadsAndAdmins, notify, notifyChat, type Notice, type NoticeResult } from './telegram';
 import { STAGE_LABEL, TYPE_LABEL, typeCount, type ContentType, type Stage } from './types';
 
@@ -135,6 +136,23 @@ async function reminders(d: Driver, now: Date, fetcher?: typeof fetch): Promise<
       const urgent = istTime(t.due_at) < '10:00';
       results.push(await notify(d, { staffId: t.owner_id, kind: 'nudge_2h', dedupeKey: `nudge_2h:${t.id}`, text: designerText, buttons: designerButtons, taskId: t.id, clientId: t.client_id, urgent }, s, { now, fetcher }));
       if (lead && lead.id !== t.owner_id) results.push(await notify(d, { staffId: lead.id, kind: 'nudge_2h', dedupeKey: `nudge_2h:${t.id}:lead`, text: leadText, buttons: leadButtons, taskId: t.id, clientId: t.client_id, urgent }, s, { now, fetcher }));
+    }
+  }
+  if (s.task_cards_enabled) {
+    // each assigned task gets one card on its day (a new owner gets their own card). Skip tasks
+    // assigned or created by hand today: those already got the instant assignment message.
+    const today = istDate(now), dayStart = toDueAt(today, '00:00');
+    const cards = await rows<CardTask & { owner_id: string; client_id: string }>(
+      `select t.id, t.title, c.name as client, t.client_id, t.content_type, t.due_at, t.stage, t.brief, t.priority, t.owner_id
+         from tasks t join clients c on c.id = t.client_id
+        where t.owner_id is not null and t.stage <> 'posted' and t.due_at >= $1 and t.due_at < $2
+          and not (t.plan_item_id is null and t.created_at >= $1)
+          and not exists (select 1 from task_events e where e.task_id = t.id and e.type = 'reassign' and e.at >= $1)
+        order by t.due_at`,
+      [dayStart, toDueAt(addDays(today, 1), '00:00')], d);
+    for (const t of cards) {
+      results.push(await notify(d, { staffId: t.owner_id, kind: 'task_card', dedupeKey: `card:${t.id}:${today}:${t.owner_id}`,
+        text: cardText(t, today), buttons: cardButtons(t, appUrl()), taskId: t.id, clientId: t.client_id }, s, { now, fetcher }));
     }
   }
   if (s.overdue_enabled) {

@@ -7,7 +7,7 @@ export interface Button { text: string; data?: string; url?: string }
 export interface Settings {
   digest_enabled: boolean; nudge_enabled: boolean; overdue_enabled: boolean; inactivity_enabled: boolean;
   quiet_hours_enabled: boolean; quiet_start: string; quiet_end: string; digest_time: string; banned_terms: string[];
-  team_group_chat_id: string | null; digest_target: 'personal' | 'group' | 'both';
+  team_group_chat_id: string | null; digest_target: 'personal' | 'group' | 'both'; task_cards_enabled: boolean;
 }
 
 export const getSettings = async (on?: Db) => (await row<Settings>(`select * from app_settings where id = 1`, [], on))!;
@@ -41,13 +41,23 @@ export async function callTelegram<T = unknown>(method: string, payload: Record<
   return body.result as T;
 }
 
+const keyboard = (buttons?: Button[][]) => (buttons?.length
+  ? { inline_keyboard: buttons.map((r) => r.map((b) => (b.url ? { text: b.text, url: b.url } : { text: b.text, callback_data: b.data }))) } : undefined);
+
 export async function sendMessage(chatId: number | string, html: string, buttons?: Button[][], fetcher?: typeof fetch) {
-  const markup = buttons?.length
-    ? { inline_keyboard: buttons.map((r) => r.map((b) => (b.url ? { text: b.text, url: b.url } : { text: b.text, callback_data: b.data }))) } : undefined;
+  const markup = keyboard(buttons);
   const r = await callTelegram<{ message_id: number }>('sendMessage', {
     chat_id: chatId, text: html, parse_mode: 'HTML', disable_web_page_preview: true, ...(markup ? { reply_markup: markup } : {}),
   }, fetcher);
   return r.message_id;
+}
+
+/** Redraw a message we sent (text and buttons), e.g. a task card after a stage button is tapped. */
+export async function editMessage(chatId: number | string, messageId: number, html: string, buttons?: Button[][], fetcher?: typeof fetch) {
+  await callTelegram('editMessageText', {
+    chat_id: chatId, message_id: messageId, text: html, parse_mode: 'HTML', disable_web_page_preview: true,
+    reply_markup: keyboard(buttons) ?? { inline_keyboard: [] },
+  }, fetcher);
 }
 
 export interface Notice {

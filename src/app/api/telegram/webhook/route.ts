@@ -3,7 +3,8 @@ import { db, row } from '@/lib/db';
 import { HttpError } from '@/lib/errors';
 import { secretMatches } from '@/lib/secret';
 import { updateTask } from '@/lib/tasks';
-import { callTelegram, esc, leadsAndAdmins, sendMessage, webhookEnabled } from '@/lib/telegram';
+import { cardButtons, cardText, type CardTask } from '@/lib/taskCards';
+import { callTelegram, editMessage, esc, leadsAndAdmins, sendMessage, webhookEnabled } from '@/lib/telegram';
 import { STAGES, STAGE_LABEL, type Stage } from '@/lib/types';
 
 const ok = () => NextResponse.json({ ok: true });
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
   }
   const update = await req.json().catch(() => null) as {
     message?: { chat: { id: number }; text?: string };
-    callback_query?: { id: string; from: { id: number }; data?: string };
+    callback_query?: { id: string; from: { id: number }; data?: string; message?: { chat: { id: number }; message_id: number } };
   } | null;
   if (!update) return ok();
 
@@ -49,10 +50,17 @@ export async function POST(req: Request) {
       const answer = (t: string) => callTelegram('answerCallbackQuery', { callback_query_id: cb.id, text: t });
       const who = await row<{ id: string; role: string; name: string }>(`select id, role, name from staff where telegram_chat_id = $1 and is_active`, [cb.from.id]);
       if (!who) { await answer('This Telegram account isn’t linked to the tracker.'); return ok(); }
-      if (!(STAGES as readonly string[]).includes(stage) || stage === 'posted') { await answer('Unknown action.'); return ok(); }
+      if (!(STAGES as readonly string[]).includes(stage)) { await answer('Unknown action.'); return ok(); }
       try {
         await updateTask(db(), { id: who.id, isLead: who.role === 'admin' || who.role === 'lead' }, taskId, { stage: stage as Stage });
         await answer(`Moved to ${STAGE_LABEL[stage as Stage]}`);
+        // redraw the message as a task card showing the new stage and the next step
+        const t = cb.message && await row<CardTask>(
+          `select t.id, t.title, c.name as client, t.content_type, t.due_at, t.stage, t.brief, t.priority from tasks t join clients c on c.id = t.client_id where t.id = $1`, [taskId]);
+        if (cb.message && t) {
+          await editMessage(cb.message.chat.id, cb.message.message_id, cardText(t), cardButtons(t, process.env.APP_URL))
+            .catch((e) => console.error('telegram edit', e));
+        }
         if (stage === 'client_review' && who.role !== 'lead' && who.role !== 'admin') {
           const lead = (await leadsAndAdmins(db())).find((l) => l.role === 'lead');
           if (lead) {
